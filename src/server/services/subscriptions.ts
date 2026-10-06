@@ -25,6 +25,7 @@ export type SubscriptionDto = {
   billingCycle: "monthly" | "yearly";
   monthlyCost: number;
   catalogPrice: number | null; // ราคาปัจจุบันในคลัง — ต่างจาก price = แสดงป้าย "ราคาในคลังเปลี่ยน"
+  billingAnchorDay: number;
   nextBillingDate: string; // รายการ active ที่เลยวันมาแล้วจะถูกเลื่อนให้ตอนอ่าน (กันกรณีงานรายวันยังไม่ได้รัน)
   trialEndsAt: string | null;
   paymentMethod: string | null;
@@ -78,6 +79,7 @@ function toDto(row: Row, today: string): SubscriptionDto {
     billingCycle: sub.billingCycle,
     monthlyCost: fromSatang(monthlySatang(priceSatang, sub.billingCycle)),
     catalogPrice: plan ? decimalToNumber(plan.price) : null,
+    billingAnchorDay: sub.billingAnchorDay,
     nextBillingDate:
       sub.status === "active"
         ? rollForward(sub.nextBillingDate, sub.billingCycle, sub.billingAnchorDay, today)

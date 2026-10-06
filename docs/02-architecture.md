@@ -17,7 +17,7 @@
 | Auth | **เขียนเอง:** bcryptjs + JWT (jose) ใน httpOnly cookie | bcryptjs 3 / jose 6 | สั้น อธิบายตอนนำเสนอหัวข้อ Authentication ได้ทุกบรรทัด | Auth.js: credentials provider ซับซ้อนเกินงาน, `bcrypt` (native) build ยากบน Windows |
 | Styling | Tailwind CSS | 4.x | ใส่ design tokens (dark + vivid + glass) เป็น CSS variables | UI kit สำเร็จรูป: ได้หน้าตาเทมเพลต |
 | ฟอนต์ | `next/font/google`: Bai Jamjuree (หัวข้อ), IBM Plex Sans Thai (เนื้อหา), IBM Plex Mono (ตัวเลข) | — | ตามที่เลือกไว้ในรอบออกแบบ | — |
-| กราฟ | Recharts | 3.x | ใช้ใน client component เฉพาะหน้า dashboard | Chart.js: ต้องจัดการ canvas lifecycle เอง |
+| กราฟ | **CSS/SVG เขียนเอง** (`components/charts/`) | — | กราฟทั้งหมดเป็นข้อมูลชุดเดียว (แท่งนอน + เส้น 1 เส้น) เขียนเองสั้นกว่า คุมธีมได้ครบ และไม่เพิ่ม JS ให้หน้าเว็บ | Recharts: ถอดออกวันที่ 6 เพราะไม่ได้ใช้ความสามารถที่คุ้มกับขนาด bundle |
 | อีเมล | Nodemailer + Gmail SMTP (App Password) | — | ตามโจทย์ | Resend/SendGrid: ต้องยืนยันโดเมน |
 | ตั้งเวลา | node-cron ที่สตาร์ตใน `instrumentation.ts` + endpoint สั่งรันเอง | 4.x | ไม่ต้องตั้ง Task Scheduler ของ Windows | cron ของ OS: ตั้งต่างกันทุกเครื่อง |
 | QR พร้อมเพย์ | `promptpay-qr` (สร้าง payload EMVCo) + `qrcode` (เรนเดอร์ SVG) | 0.5 / 1.5 | ไลบรารีเล็ก ทำงานบน server | เขียน EMVCo + CRC16 เอง: เสี่ยงผิดโดยไม่รู้ตัว |
@@ -466,7 +466,7 @@ type AdminDashboard = {
 
 ## 6. งานแจ้งเตือนรายวัน
 
-**ที่รัน:** `src/instrumentation.ts` → `register()` เมื่อ `process.env.NEXT_RUNTIME === 'nodejs'` และ `CRON_ENABLED=true` → `cron.schedule('0 8 * * *', runReminders, { timezone: 'Asia/Bangkok' })` และเรียก `runReminders()` หนึ่งครั้งตอนสตาร์ต (ตามงานที่พลาดตอนเครื่องปิด) · มี flag `running` กันรันซ้อนกับการกดผ่าน `POST /api/cron/reminders`
+**ที่รัน:** `src/instrumentation.ts` → `register()` เมื่อ `NEXT_RUNTIME === "nodejs"` และ `CRON_ENABLED=true` → `node-cron` ตั้งเวลา 08:00 Asia/Bangkok ให้ **`fetch` ไปที่ `POST /api/cron/reminders` ของตัวเอง** (พร้อม `CRON_SECRET`) และเรียกหนึ่งครั้ง 15 วินาทีหลังสตาร์ต (ตามงานที่พลาดตอนเครื่องปิด) · ที่ไม่เรียก `runReminders()` ตรง ๆ เพราะ instrumentation ไม่ควร import โมดูล `server-only`/DB และทางเดียวกันนี้ใช้กับ scheduler ภายนอกได้ทันที · มี flag `running` กันรันซ้อน · `api()` รับ `{ allowCrossOrigin: true }` เฉพาะ endpoint นี้ เพราะไม่มี header Origin
 
 **`runReminders(today)`** (`server/services/reminders.ts`; `today` รับเป็นพารามิเตอร์เพื่อเทสได้)
 1. **Roll** วันตัดเงินที่เลยแล้วตามกฎข้อ 3.3.2–3

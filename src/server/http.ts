@@ -80,10 +80,13 @@ export async function parseBody<S extends z.ZodType>(req: Request, schema: S): P
  * ห่อ route handler: ตรวจ origin, แปลง ApiError เป็น response, และซ่อนรายละเอียดของ error ที่ไม่ได้ตั้งใจ
  * ใช้: export const POST = api(async (req, ctx) => ok(...))
  */
-export function api<Ctx = unknown>(handler: (req: Request, ctx: Ctx) => Promise<Response>) {
+export function api<Ctx = unknown>(
+  handler: (req: Request, ctx: Ctx) => Promise<Response>,
+  opts: { allowCrossOrigin?: boolean } = {}, // เฉพาะ endpoint ที่เครื่องอื่นเรียก (cron) และตรวจสิทธิ์ด้วย secret เอง
+) {
   return async (req: Request, ctx: Ctx): Promise<Response> => {
     try {
-      assertSameOrigin(req);
+      if (!opts.allowCrossOrigin) assertSameOrigin(req);
       return await handler(req, ctx);
     } catch (err) {
       if (err instanceof ApiError) return fail(err.status, err.code, err.message, err.fields);

@@ -30,6 +30,7 @@ export const config = {
     "/settings/:path*",
     "/groups/:path*",
     "/savings/:path*",
+    "/notifications/:path*",
     "/admin/:path*",
   ],
 };

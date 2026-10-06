@@ -129,7 +129,7 @@ async function main() {
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (adminEmail && adminPassword && adminPassword.length >= 8) {
-    const admin = await ensureUser("ผู้ดูแลระบบ", adminEmail, adminPassword, "admin");
+    const admin = await ensureUser("แอดมินตัดยัง", adminEmail, adminPassword, "admin");
     console.log(`admin ${adminEmail}: ${admin.created ? "สร้างใหม่" : "มีอยู่แล้ว"}`);
   } else {
     console.warn("ข้ามการสร้าง admin — ตั้ง ADMIN_EMAIL และ ADMIN_PASSWORD (≥ 8 ตัว) ใน .env");

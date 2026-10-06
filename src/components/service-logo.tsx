@@ -1,6 +1,11 @@
 /* eslint-disable @next/next/no-img-element -- โลโก้มาจาก URL ที่ admin ใส่ได้ทุกโดเมน จึงไม่ใช้ next/image */
 
-const SIZES = { sm: "size-8 text-caption", md: "size-10 text-body", lg: "size-16 text-h3" } as const;
+const SIZES = {
+  xs: "size-5 text-[10px]",
+  sm: "size-8 text-caption",
+  md: "size-10 text-body",
+  lg: "size-16 text-h3",
+} as const;
 
 /** โลโก้บริการ: มีรูปใช้รูปบนพื้นขาว ไม่มีรูปใช้ตัวอักษรแรกบนพื้นแก้ว (docs/03 ข้อ 5) */
 export function ServiceLogo({

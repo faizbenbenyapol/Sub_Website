@@ -36,6 +36,21 @@ npm run dev                   # http://localhost:3000
 | `npm run db:reset` | ล้างทุกตาราง → migrate → seed ใหม่ (ห้ามใช้บน production) |
 | `npm run db:studio` | ดูข้อมูลผ่าน Drizzle Studio |
 
+## อีเมลแจ้งเตือน
+
+- ค่าเริ่มต้น `MAIL_TRANSPORT=console` อีเมลจะพิมพ์ใน log ของเซิร์ฟเวอร์ ไม่ส่งจริง
+- ส่งจริงผ่าน Gmail: เปิดยืนยันตัวตน 2 ขั้นของบัญชี Gmail โปรเจกต์ → สร้าง App Password → ใส่ `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` แล้วตั้ง `MAIL_TRANSPORT=smtp` → restart เซิร์ฟเวอร์
+- งานเตือนรายวันรันเองทุก 08:00 และตอนเปิดเซิร์ฟเวอร์ สั่งรันเองได้ด้วย:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/reminders
+```
+
+## ปัญหาที่เจอบ่อย
+
+- **หน้าตาเพี้ยน/คลาส Tailwind ไม่ทำงานหลังเพิ่มไฟล์ใหม่ตอน `npm run dev`** — หยุดแล้วรัน `npm run dev` ใหม่ (ตัวสแกนคลาสของ dev server บางครั้งไม่เห็นไฟล์ใหม่)
+- **ต่อฐานข้อมูลไม่ได้** — เช็กว่า Docker Desktop เปิดอยู่ และ `npm run db:up` แล้ว (MySQL ใช้พอร์ต 3307)
+
 ## เอกสาร
 
 1. [Requirements และแผนรายวัน](docs/01-requirements.md)

@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/admin", label: "ภาพรวม", exact: true },
   { href: "/admin/categories", label: "หมวดหมู่" },
   { href: "/admin/services", label: "บริการและแพ็กเกจ" },
+  { href: "/admin/users", label: "ผู้ใช้" },
 ];
 
 /** เมนูหลังบ้าน: desktop เป็น sidebar ซ้าย, มือถือเป็นแถบเลื่อนแนวนอนใต้แถบบน */
