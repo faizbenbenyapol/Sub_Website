@@ -58,10 +58,27 @@ describe("วันที่ภาษาไทย", () => {
     const { formatThaiDate } = await import("../dates");
     expect(formatThaiDate("2026-10-09")).toBe("ศ. 9 ต.ค.");
     expect(formatThaiDate("2026-10-09", "long")).toBe("ศุกร์ 9 ตุลาคม 2569");
+    expect(formatThaiDate("2026-10-09", "medium")).toBe("9 ต.ค. 2569");
   });
 
   it("timestamp UTC แสดงเป็นเวลาไทย", async () => {
     const { formatThaiDateTime } = await import("../dates");
     expect(formatThaiDateTime("2026-10-06T18:30:00.000Z")).toBe("7 ต.ค. 2569 01:30");
+  });
+});
+
+describe("ค่าใช้จ่ายต่อเดือนและป้ายนับถอยหลัง", () => {
+  it("U-M1 รายเดือนเท่าเดิม รายปีหาร 12", async () => {
+    const { monthlySatang } = await import("../billing");
+    expect(monthlySatang(41900, "monthly")).toBe(41900);
+    expect(monthlySatang(129000, "yearly")).toBe(10750);
+  });
+
+  it("U-D3 วันนี้ / พรุ่งนี้ / อีก N วัน / เลยมา", async () => {
+    const { relativeDayLabel } = await import("../dates");
+    expect(relativeDayLabel("2026-10-07", "2026-10-07")).toBe("วันนี้");
+    expect(relativeDayLabel("2026-10-07", "2026-10-08")).toBe("พรุ่งนี้");
+    expect(relativeDayLabel("2026-10-07", "2026-10-10")).toBe("อีก 3 วัน");
+    expect(relativeDayLabel("2026-10-07", "2026-10-05")).toBe("เลยมา 2 วัน");
   });
 });

@@ -348,23 +348,22 @@ type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "m
 | 👤 | `PATCH /api/subscriptions/:id` | ฟิลด์ใดก็ได้จากตอนสร้าง + `status: "active"\|"cancelled"` | `{ data: Subscription }` | 400, 404 |
 | 👤 | `DELETE /api/subscriptions/:id` | — | `204` (ลบกลุ่มหารที่ผูกไว้ด้วย — UI ต้องยืนยันก่อน) | 404 |
 
-Body ของ `POST`:
+Body ของ `POST` (เปลี่ยนจากร่างแรก: ใช้ฟิลด์ `source` บอกชนิดให้ชัด แทนการเดาจากว่ามี `planId` หรือไม่):
 ```ts
 {
-  // แบบจากคลัง
-  planId?: number;
-  // แบบ custom (ต้องมีทั้งคู่เมื่อไม่มี planId)
-  customName?: string;          // 1–100
-  customCategoryId?: number;
-  // ร่วม
-  price: number;                // >= 0, <= 99999.99 · จากคลัง: ถ้าไม่ส่งใช้ราคาแพ็กเกจ
-  billingCycle: "monthly" | "yearly";   // จากคลัง: ถ้าไม่ส่งใช้ของแพ็กเกจ
+  source: "catalog"; planId: number;                       // เลือกจากคลัง (แพ็กเกจและบริการต้องไม่ถูกซ่อน)
+} | {
+  source: "custom"; customName: string; customCategoryId: number;   // เพิ่มเอง
+} & {
+  price: number;                // บังคับ >= 0, <= 99999.99 — ฟอร์มเติมราคาแพ็กเกจให้ ผู้ใช้แก้ได้ (ราคาโปรฯ)
+  billingCycle: "monthly" | "yearly";
   nextBillingDate: string;      // YYYY-MM-DD, >= วันนี้ (ไทย)
-  trialEndsAt?: string | null;  // YYYY-MM-DD
-  paymentMethod?: string | null;// <= 100
-  note?: string | null;         // <= 500
+  trialEndsAt?: string | null;  // YYYY-MM-DD, "" = null
+  paymentMethod?: string | null;// <= 100, "" = null
+  note?: string | null;         // <= 500, "" = null
 }
 ```
+PATCH: ไม่มี `source` · รายการจากคลังเปลี่ยน `planId` ได้เฉพาะแพ็กเกจของบริการเดิม · รายการ custom แก้ได้แค่ `customName`/`customCategoryId` (ข้ามชนิดกันได้ 400) · `GET` คืน `nextBillingDate` ที่เลื่อนให้แล้วถ้าเลยวันมา (กันกรณีงานรายวันยังไม่รัน)
 ยกเลิก = `PATCH { status: "cancelled" }` → server ตั้ง `cancelledAt` · กลับมาใช้ = `PATCH { status: "active", nextBillingDate }`
 
 ### 5.6 Dashboard & ปฏิทิน

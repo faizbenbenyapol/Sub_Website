@@ -21,7 +21,7 @@ npm run dev                   # http://localhost:3000
 
 บัญชีตัวอย่าง: ล็อกอินด้วย `DEMO_EMAIL` / `DEMO_PASSWORD` ใน `.env` (มี 7 รายการ ตัดเงินภายใน 7 วันข้างหน้า) · admin ใช้ `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 
-ราคาในคลังเก็บเมื่อ 7 ต.ค. 2569 พร้อมแหล่งอ้างอิงของแต่ละบริการใน [scripts/seed-data.ts](scripts/seed-data.ts)
+ราคาในคลังเก็บเมื่อ 6 ต.ค. 2569 พร้อมแหล่งอ้างอิงของแต่ละบริการใน [scripts/seed-data.ts](scripts/seed-data.ts)
 
 ## คำสั่งที่ใช้บ่อย
 

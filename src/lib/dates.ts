@@ -47,11 +47,15 @@ const thaiParts = (date: Date, options: Intl.DateTimeFormatOptions) =>
   );
 
 /**
- * วันที่ปฏิทินแบบไทย: short = "ศ. 9 ต.ค." (สลิป/ปฏิทิน), long = "ศุกร์ 9 ตุลาคม 2569" (หน้ารายละเอียด/อีเมล)
+ * วันที่ปฏิทินแบบไทย: short = "ศ. 9 ต.ค." (สลิป/ปฏิทิน), medium = "9 ต.ค. 2569", long = "ศุกร์ 9 ตุลาคม 2569" (หน้ารายละเอียด/อีเมล)
  * รับ "YYYY-MM-DD" แล้วตีเป็นเที่ยงวันเวลาไทย จึงไม่เลื่อนวันไม่ว่าเครื่องตั้ง timezone อะไร
  */
-export function formatThaiDate(iso: string, style: "short" | "long" = "short"): string {
+export function formatThaiDate(iso: string, style: "short" | "medium" | "long" = "short"): string {
   const date = new Date(`${iso}T12:00:00+07:00`);
+  if (style === "medium") {
+    const p = thaiParts(date, { day: "numeric", month: "short", year: "numeric" });
+    return `${p.day} ${p.month} ${p.year}`;
+  }
   if (style === "short") {
     // ICU แสดงวันแบบย่อของไทยเป็นคำเต็ม ("ศุกร์") จึงใช้ตารางตัวย่อเอง
     const { y, m, d } = parseIsoDate(iso);
@@ -73,4 +77,13 @@ export function formatThaiDateTime(isoTimestamp: string): string {
     hourCycle: "h23",
   });
   return `${p.day} ${p.month} ${p.year} ${p.hour}:${p.minute}`;
+}
+
+/** ระยะเวลาถึงวันตัดเงินแบบที่คนพูด: "วันนี้", "พรุ่งนี้", "อีก 3 วัน" (ผ่านมาแล้ว: "เลยมา 2 วัน") */
+export function relativeDayLabel(today: string, date: string): string {
+  const days = daysBetween(today, date);
+  if (days === 0) return "วันนี้";
+  if (days === 1) return "พรุ่งนี้";
+  if (days > 1) return `อีก ${days} วัน`;
+  return `เลยมา ${-days} วัน`;
 }

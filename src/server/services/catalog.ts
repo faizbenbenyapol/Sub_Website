@@ -1,7 +1,15 @@
 import "server-only";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, like } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, plans, priceHistory, type Category, type Plan, type Service } from "@/db/schema";
+import {
+  categories,
+  plans,
+  priceHistory,
+  services,
+  type Category,
+  type Plan,
+  type Service,
+} from "@/db/schema";
 import { decimalToNumber, toSatang } from "@/lib/money";
 import { splitSteps } from "@/lib/validation/catalog";
 
@@ -130,4 +138,57 @@ export async function getPriceHistory(planId: number): Promise<PricePointDto[] |
     { price: decimalToNumber(changes[0].oldPrice), from: plan.createdAt.toISOString() },
     ...changes.map((c) => ({ price: decimalToNumber(c.newPrice), from: c.changedAt.toISOString() })),
   ];
+}
+
+// ─── อ่านฝั่งผู้ใช้ (เฉพาะที่แสดงอยู่) ────────────────────────
+
+/** บริการที่แสดงอยู่ ค้นตามชื่อและกรองตาม slug ของหมวด (US-B1) */
+export async function listServicesPublic(filter: {
+  q?: string;
+  category?: string;
+}): Promise<ServiceSummaryDto[]> {
+  const q = filter.q?.trim();
+  const rows = await db
+    .select({ service: services, category: categories })
+    .from(services)
+    .innerJoin(categories, eq(services.categoryId, categories.id))
+    .where(
+      and(
+        eq(services.isActive, true),
+        q ? like(services.name, `%${q}%`) : undefined,
+        filter.category ? eq(categories.slug, filter.category) : undefined,
+      ),
+    )
+    .orderBy(asc(services.name));
+  const planMap = await plansByService(rows.map((r) => r.service.id));
+  return rows.map(({ service, category }) =>
+    toServiceSummaryDto(service, category, planMap.get(service.id) ?? []),
+  );
+}
+
+/** รายละเอียดบริการจาก slug (US-B2) — บริการที่ซ่อนถือว่าไม่พบ */
+export async function getServiceBySlug(slug: string): Promise<ServiceDetailDto | null> {
+  const [row] = await db
+    .select({ service: services, category: categories })
+    .from(services)
+    .innerJoin(categories, eq(services.categoryId, categories.id))
+    .where(and(eq(services.slug, slug), eq(services.isActive, true)))
+    .limit(1);
+  if (!row) return null;
+  const planMap = await plansByService([row.service.id]);
+  return toServiceDetailDto(row.service, row.category, planMap.get(row.service.id) ?? []);
+}
+
+/** บริการทุกตัวพร้อมแพ็กเกจที่เลือกได้ สำหรับขั้นเลือกบริการในฟอร์มเพิ่มรายการ */
+export async function listSelectableServices(): Promise<ServiceDetailDto[]> {
+  const rows = await db
+    .select({ service: services, category: categories })
+    .from(services)
+    .innerJoin(categories, eq(services.categoryId, categories.id))
+    .where(eq(services.isActive, true))
+    .orderBy(asc(services.name));
+  const planMap = await plansByService(rows.map((r) => r.service.id));
+  return rows
+    .map(({ service, category }) => toServiceDetailDto(service, category, planMap.get(service.id) ?? []))
+    .filter((s) => s.plans.length > 0);
 }

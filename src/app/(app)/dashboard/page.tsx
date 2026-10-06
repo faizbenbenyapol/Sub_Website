@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCurrentUser } from "@/server/auth";
 
 export const metadata: Metadata = { title: "ภาพรวม" };
@@ -7,9 +8,15 @@ export const metadata: Metadata = { title: "ภาพรวม" };
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   return (
-    <main className="mx-auto max-w-[1120px] px-4 py-10 md:px-8">
+    <main>
       <h1 className="text-h2 font-bold">สวัสดี {user?.name}</h1>
-      <p className="mt-2 text-text-muted">ยังไม่มีรายการ — หน้าภาพรวมจะมาในวันที่ 6</p>
+      <p className="mt-2 text-text-muted">หน้าภาพรวมจะมาในวันที่ 6 — ตอนนี้ดูรายการทั้งหมดได้ที่หน้ารายการ</p>
+      <Link
+        href="/subscriptions"
+        className="mt-4 inline-block font-medium text-link underline underline-offset-4"
+      >
+        ไปที่รายการของฉัน
+      </Link>
     </main>
   );
 }

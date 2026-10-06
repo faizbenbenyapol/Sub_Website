@@ -197,7 +197,7 @@ users ─┬─< user_subscriptions >── plans >── services >── categ
 | 2 | พ. 7 ต.ค. | ออกแบบ UI/design tokens ✅, วางแผนการเทส ✅, ตั้งค่าโปรเจกต์ Next.js + MySQL ✅ | ui-ux-designer, test-planner, devops-engineer | `npm run dev` ทำงาน และเชื่อมต่อ DB ได้ |
 | 3 | พฤ. 8 ต.ค. | Schema + migration + seed (บริการจริง ~20 รายการ) ✅, ระบบสมาชิก + แยกสิทธิ์ ✅ | database-engineer, backend-developer | สมัคร/เข้าสู่ระบบได้, `/admin` กันสิทธิ์ได้ |
 | 4 | ศ. 9 ต.ค. | หลังบ้าน Admin: CRUD หมวดหมู่ บริการ แพ็กเกจ + ประวัติราคา ✅ | backend-developer, frontend-developer | Admin CRUD ได้ครบทั้ง 3 ตาราง |
-| 5 | ส. 10 ต.ค. | ฝั่งผู้ใช้: คลังข้อมูลบริการ, CRUD subscription | frontend-developer, backend-developer | ผู้ใช้เพิ่ม/แก้/ลบ subscription ได้ |
+| 5 | ส. 10 ต.ค. | ฝั่งผู้ใช้: คลังข้อมูลบริการ ✅, CRUD subscription ✅ | frontend-developer, backend-developer | ผู้ใช้เพิ่ม/แก้/ลบ subscription ได้ |
 | 6 | อา. 11 ต.ค. | Dashboard ผู้ใช้ + ปฏิทิน, Dashboard Admin, ระบบแจ้งเตือนทางอีเมล | frontend-developer, backend-developer | **P0 ครบทั้งหมด** ได้รับอีเมลแจ้งเตือนจริง |
 | 7 | จ. 12 ต.ค. | P1: หารค่าบริการ + QR พร้อมเพย์, ตัวช่วยประหยัด | frontend-developer, backend-developer | สแกน QR ด้วยแอปธนาคารแล้วยอดเงินถูกต้อง |
 | 8 | อ. 13 ต.ค. | เทส unit/E2E, ตรวจ responsive, รีวิวโค้ด + ตรวจความปลอดภัย, แก้บั๊ก | test-engineer, e2e-tester, code-reviewer, security-auditor, debugger | เทส P0 ผ่านทั้งหมด ไม่มีปัญหาระดับ Critical/High |

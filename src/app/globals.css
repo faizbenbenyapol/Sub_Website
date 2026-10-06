@@ -115,6 +115,13 @@ a {
     }
   }
 
+  /* แถบเมนูที่ติดขอบจอ: ทึบกว่าการ์ดแก้ว เพราะเนื้อหาเลื่อนลอดใต้ ถ้าโปร่งเกินตัวหนังสือจะซ้อนกันอ่านไม่ออก */
+  .bar {
+    background: rgb(11 11 15 / 0.86);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
   .figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;

@@ -28,3 +28,8 @@ export function rollForward(iso: string, cycle: Cycle, anchorDay: number, today:
   while (date < today) date = nextCycleDate(date, cycle, anchorDay);
   return date;
 }
+
+/** ค่าใช้จ่ายเทียบต่อเดือนเป็นสตางค์: รายปีหาร 12 แล้วปัดเป็นสตางค์ (docs/02 ข้อ 3.3 ข้อ 4) */
+export function monthlySatang(priceSatang: number, cycle: Cycle): number {
+  return cycle === "monthly" ? priceSatang : Math.round(priceSatang / 12);
+}
