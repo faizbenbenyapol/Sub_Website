@@ -12,10 +12,16 @@ Stack: Next.js 16 · TypeScript · Tailwind CSS 4 · MySQL 8.4 · Drizzle ORM �
 npm install
 cp .env.example .env          # แล้วเติม SESSION_SECRET, CRON_SECRET (คำสั่งสุ่มอยู่ในไฟล์)
 npm run db:up                 # MySQL ที่พอร์ต 3307 + phpMyAdmin ที่ http://localhost:8080
+npm run db:migrate            # สร้างตาราง
+npm run db:seed               # หมวด + 18 บริการ + บัญชี admin / demo ตามค่าใน .env
 npm run dev                   # http://localhost:3000
 ```
 
 เช็กว่าเว็บต่อฐานข้อมูลได้: เปิด http://localhost:3000/api/health ต้องได้ `{"data":{"status":"ok","db":"ok"}}`
+
+บัญชีตัวอย่าง: ล็อกอินด้วย `DEMO_EMAIL` / `DEMO_PASSWORD` ใน `.env` (มี 7 รายการ ตัดเงินภายใน 7 วันข้างหน้า) · admin ใช้ `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+
+ราคาในคลังเก็บเมื่อ 7 ต.ค. 2569 พร้อมแหล่งอ้างอิงของแต่ละบริการใน [scripts/seed-data.ts](scripts/seed-data.ts)
 
 ## คำสั่งที่ใช้บ่อย
 
@@ -26,6 +32,8 @@ npm run dev                   # http://localhost:3000
 | `npm run format` | จัดรูปแบบโค้ดด้วย Prettier |
 | `npm run db:generate` | สร้างไฟล์ migration `.sql` จาก `src/db/schema.ts` |
 | `npm run db:migrate` | รัน migration กับฐานข้อมูลใน `.env` |
+| `npm run db:seed` | ใส่ข้อมูลเริ่มต้น (รันซ้ำได้ ไม่สร้างของซ้ำ) |
+| `npm run db:reset` | ล้างทุกตาราง → migrate → seed ใหม่ (ห้ามใช้บน production) |
 | `npm run db:studio` | ดูข้อมูลผ่าน Drizzle Studio |
 
 ## เอกสาร

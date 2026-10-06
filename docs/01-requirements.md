@@ -195,7 +195,7 @@ users ─┬─< user_subscriptions >── plans >── services >── categ
 |---|---|---|---|---|
 | 1 | อ. 6 ต.ค. | Requirements ✅, ออกแบบสถาปัตยกรรมและฐานข้อมูล ✅ | product-planner, system-architect | มี `docs/01`, `docs/02` |
 | 2 | พ. 7 ต.ค. | ออกแบบ UI/design tokens ✅, วางแผนการเทส ✅, ตั้งค่าโปรเจกต์ Next.js + MySQL ✅ | ui-ux-designer, test-planner, devops-engineer | `npm run dev` ทำงาน และเชื่อมต่อ DB ได้ |
-| 3 | พฤ. 8 ต.ค. | Schema + migration + seed (บริการจริง ~20 รายการ), ระบบสมาชิก + แยกสิทธิ์ | database-engineer, backend-developer | สมัคร/เข้าสู่ระบบได้, `/admin` กันสิทธิ์ได้ |
+| 3 | พฤ. 8 ต.ค. | Schema + migration + seed (บริการจริง ~20 รายการ) ✅, ระบบสมาชิก + แยกสิทธิ์ ✅ | database-engineer, backend-developer | สมัคร/เข้าสู่ระบบได้, `/admin` กันสิทธิ์ได้ |
 | 4 | ศ. 9 ต.ค. | หลังบ้าน Admin: CRUD หมวดหมู่ บริการ แพ็กเกจ + ประวัติราคา | backend-developer, frontend-developer | Admin CRUD ได้ครบทั้ง 3 ตาราง |
 | 5 | ส. 10 ต.ค. | ฝั่งผู้ใช้: คลังข้อมูลบริการ, CRUD subscription | frontend-developer, backend-developer | ผู้ใช้เพิ่ม/แก้/ลบ subscription ได้ |
 | 6 | อา. 11 ต.ค. | Dashboard ผู้ใช้ + ปฏิทิน, Dashboard Admin, ระบบแจ้งเตือนทางอีเมล | frontend-developer, backend-developer | **P0 ครบทั้งหมด** ได้รับอีเมลแจ้งเตือนจริง |

@@ -19,4 +19,4 @@ function createPool() {
 export const pool = globalForDb.mysqlPool ?? createPool();
 if (process.env.NODE_ENV !== "production") globalForDb.mysqlPool = pool;
 
-export const db = drizzle({ client: pool, schema, mode: "default" });
+export const db = drizzle({ client: pool, schema, mode: "default", casing: "snake_case" });

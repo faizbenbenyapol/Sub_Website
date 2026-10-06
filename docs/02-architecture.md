@@ -250,14 +250,14 @@ erDiagram
 - **ไม่มีทางสมัครเป็น admin ผ่านเว็บ** — admin สร้างจาก `scripts/seed.ts` ด้วย `ADMIN_EMAIL`/`ADMIN_PASSWORD`
 
 **สองชั้นตรวจ**
-1. `src/proxy.ts` (เร็ว ไม่แตะ DB): verify ลายเซ็น JWT → ไม่มี/ไม่ถูก บน `/dashboard|/subscriptions|/calendar|/settings|/groups|/savings` → redirect `/login?next=…` · `/admin/*` ที่ role ไม่ใช่ admin → rewrite ไปหน้า 403
+1. `src/proxy.ts` (เร็ว ไม่แตะ DB): verify ลายเซ็น JWT → ไม่มี/ไม่ถูก บน `/dashboard|/subscriptions|/calendar|/settings|/groups|/savings` → redirect `/login?next=…` · `/admin/*` ที่ role ไม่ใช่ admin → rewrite ไปหน้า 403 · **proxy ไม่พาคนที่ล็อกอินแล้วออกจาก /login** (ทำใน page ด้วย `redirectIfSignedIn()` ที่เช็ก DB) เพราะถ้าเช็กแค่ token บัญชีที่ถูกระงับจะติด redirect วน /dashboard ↔ /login
 2. **ทุก API handler** เรียก `requireUser()` / `requireAdmin()` ซึ่งโหลดผู้ใช้จาก DB ทุกครั้ง → ไม่พบ = 401, `status = 'suspended'` = 403 `ACCOUNT_SUSPENDED` (ระงับแล้วมีผลทันทีไม่ต้องรอ token หมดอายุ), ไม่ใช่ admin = 403 `FORBIDDEN` · **ห้ามเชื่อ role ใน JWT สำหรับ API**
 
 **ความเป็นเจ้าของ (US-A3)** — ทุก query ของข้อมูลผู้ใช้มี `WHERE user_id = :sessionUserId` อยู่ใน SQL (ไม่ใช่ดึงมาแล้วค่อยเช็ก) ไม่พบ → **404** `NOT_FOUND` เสมอ (ไม่บอกว่ามีแต่ไม่ใช่ของคุณ)
 
 **อื่น ๆ**
 - Login ผิด: 401 `INVALID_CREDENTIALS` ข้อความเดียวกันทั้งอีเมลผิดและรหัสผิด · ผิด 5 ครั้งใน 15 นาทีต่ออีเมล → 429 `RATE_LIMITED` (in-memory พอสำหรับ process เดียว)
-- CSRF: `sameSite=lax` + API ที่ไม่ใช่ GET ต้องมี `Content-Type: application/json` และ header `Origin` ตรงกับ `APP_URL`
+- CSRF: `sameSite=lax` + API ที่ไม่ใช่ GET ต้องมี `Content-Type: application/json` และ host ของ header `Origin` ต้องตรงกับ `Host` ของ request (ไม่เทียบกับ `APP_URL` เพื่อให้เปิดผ่าน IP ในวง LAN บนมือถือตอน demo ได้)
 - Admin เห็นเฉพาะข้อมูลบัญชี (US-H4) — `/api/admin/users` select แค่ `id, name, email, role, status, created_at` และ admin ระงับตัวเอง/admin คนอื่นไม่ได้
 
 ---
