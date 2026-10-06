@@ -92,3 +92,19 @@ export function api<Ctx = unknown>(handler: (req: Request, ctx: Ctx) => Promise<
     }
   };
 }
+
+/** อ่าน id ตัวเลขจาก dynamic segment — ไม่ใช่จำนวนเต็มบวกถือว่าไม่พบ (404) */
+export async function idParam(params: Promise<Record<string, string>>, key = "id"): Promise<number> {
+  const raw = (await params)[key];
+  const id = Number(raw);
+  if (!/^\d+$/.test(raw ?? "") || !Number.isSafeInteger(id) || id <= 0) {
+    throw new ApiError(404, "NOT_FOUND", "ไม่พบข้อมูลที่ต้องการ");
+  }
+  return id;
+}
+
+/** อ่าน query string แบบ optional (ค่าว่างถือว่าไม่ได้ส่ง) */
+export function queryParam(req: Request, key: string): string | undefined {
+  const value = new URL(req.url).searchParams.get(key)?.trim();
+  return value ? value : undefined;
+}

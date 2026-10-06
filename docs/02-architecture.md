@@ -440,7 +440,7 @@ type GroupDetail = GroupSummary & {
 | `DELETE /api/admin/categories/:id` | — | `204` | 404, 409 `IN_USE` (มีบริการหรือ custom subscription ใช้อยู่) |
 | `GET /api/admin/services` | `q?`, `category?` | `{ data: (ServiceSummary & { isActive, planCount, subscriberCount })[] }` รวมที่ซ่อน | — |
 | `POST /api/admin/services` | `{ name, slug, categoryId, logoUrl?, websiteUrl?, cancelSteps: string, isActive? }` | `201 { data: ServiceDetail }` | 400 |
-| `GET /api/admin/services/:id` | — | `{ data: ServiceDetail }` (plans รวมที่ซ่อน) | 404 |
+| `GET /api/admin/services/:id` | — | `{ data: ServiceDetail & { isActive, cancelStepsText } }` (plans รวมที่ซ่อน, `cancelStepsText` = ข้อความดิบสำหรับฟอร์มแก้) | 404 |
 | `PATCH /api/admin/services/:id` | ฟิลด์ใดก็ได้ | `{ data: ServiceDetail }` | 400, 404 |
 | `DELETE /api/admin/services/:id` | — | `204` | 404, **409 `IN_USE` message: "มีผู้ใช้ผูกบริการนี้อยู่ ซ่อนบริการแทนการลบ"** |
 | `POST /api/admin/services/:id/plans` | `{ name, price, billingCycle, maxMembers?, isActive? }` | `201 { data: Plan }` | 400, 404 |

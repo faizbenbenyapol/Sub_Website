@@ -50,7 +50,7 @@ describe("A3-7 ทุก API route ที่ไม่ใช่ public ต้อ�
 
   it("ทุก route ห่อด้วย api() เพื่อให้ error format เดียวกันและตรวจ origin", () => {
     const unwrapped = routes.filter(
-      ({ file }) => !/export const (GET|POST|PUT|PATCH|DELETE) = api\(/.test(readFileSync(file, "utf8")),
+      ({ file }) => !/export const (GET|POST|PUT|PATCH|DELETE) = api[<(]/.test(readFileSync(file, "utf8")),
     );
     // health เป็นข้อยกเว้นเดียว: ต้องตอบได้แม้ชั้น api() มีปัญหา
     expect(unwrapped.map((r) => r.route)).toEqual(["health"]);

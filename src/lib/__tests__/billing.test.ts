@@ -52,3 +52,16 @@ describe("dates", () => {
     expect(daysBetween("2026-10-10", "2026-10-07")).toBe(-3);
   });
 });
+
+describe("วันที่ภาษาไทย", () => {
+  it("U-D2 แบบสั้นและแบบยาว (พ.ศ.)", async () => {
+    const { formatThaiDate } = await import("../dates");
+    expect(formatThaiDate("2026-10-09")).toBe("ศ. 9 ต.ค.");
+    expect(formatThaiDate("2026-10-09", "long")).toBe("ศุกร์ 9 ตุลาคม 2569");
+  });
+
+  it("timestamp UTC แสดงเป็นเวลาไทย", async () => {
+    const { formatThaiDateTime } = await import("../dates");
+    expect(formatThaiDateTime("2026-10-06T18:30:00.000Z")).toBe("7 ต.ค. 2569 01:30");
+  });
+});

@@ -36,3 +36,41 @@ export function daysBetween(from: string, to: string): number {
   const b = parseIsoDate(to);
   return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86_400_000);
 }
+
+const THAI_WEEKDAY_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+
+const thaiParts = (date: Date, options: Intl.DateTimeFormatOptions) =>
+  Object.fromEntries(
+    new Intl.DateTimeFormat("th-TH-u-ca-buddhist", { timeZone: BANGKOK, ...options })
+      .formatToParts(date)
+      .map((p) => [p.type, p.value]),
+  );
+
+/**
+ * วันที่ปฏิทินแบบไทย: short = "ศ. 9 ต.ค." (สลิป/ปฏิทิน), long = "ศุกร์ 9 ตุลาคม 2569" (หน้ารายละเอียด/อีเมล)
+ * รับ "YYYY-MM-DD" แล้วตีเป็นเที่ยงวันเวลาไทย จึงไม่เลื่อนวันไม่ว่าเครื่องตั้ง timezone อะไร
+ */
+export function formatThaiDate(iso: string, style: "short" | "long" = "short"): string {
+  const date = new Date(`${iso}T12:00:00+07:00`);
+  if (style === "short") {
+    // ICU แสดงวันแบบย่อของไทยเป็นคำเต็ม ("ศุกร์") จึงใช้ตารางตัวย่อเอง
+    const { y, m, d } = parseIsoDate(iso);
+    const weekday = THAI_WEEKDAY_SHORT[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+    return `${weekday} ${d} ${thaiParts(date, { month: "short" }).month}`;
+  }
+  const p = thaiParts(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return `${p.weekday.replace(/^วัน/, "")} ${p.day} ${p.month} ${p.year}`;
+}
+
+/** timestamp (ISO UTC) → "7 ต.ค. 2569 22:15" ตามเวลาไทย */
+export function formatThaiDateTime(isoTimestamp: string): string {
+  const p = thaiParts(new Date(isoTimestamp), {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+  return `${p.day} ${p.month} ${p.year} ${p.hour}:${p.minute}`;
+}
