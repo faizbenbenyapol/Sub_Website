@@ -47,6 +47,7 @@ export const users = mysqlTable("users", {
   status: mysqlEnum(["active", "suspended"]).notNull().default("active"),
   notifyEnabled: boolean().notNull().default(true),
   notifyDaysBefore: tinyint().notNull().default(3), // app รับแค่ 1 / 3 / 7
+  sessionVersion: int().notNull().default(0), // เพิ่มทีละ 1 ตอน logout → token เก่าทุกใบใช้ไม่ได้ทันที
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

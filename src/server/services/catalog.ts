@@ -10,6 +10,7 @@ import {
   type Plan,
   type Service,
 } from "@/db/schema";
+import { containsPattern } from "@/lib/like";
 import { decimalToNumber, toSatang } from "@/lib/money";
 import { splitSteps } from "@/lib/validation/catalog";
 
@@ -155,7 +156,7 @@ export async function listServicesPublic(filter: {
     .where(
       and(
         eq(services.isActive, true),
-        q ? like(services.name, `%${q}%`) : undefined,
+        q ? like(services.name, containsPattern(q)) : undefined,
         filter.category ? eq(categories.slug, filter.category) : undefined,
       ),
     )

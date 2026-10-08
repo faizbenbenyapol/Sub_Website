@@ -6,7 +6,8 @@ import { jwtVerify, SignJWT } from "jose";
 export const SESSION_COOKIE = "session";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 วัน (วินาที)
 
-export type SessionClaims = { userId: number; role: "user" | "admin" };
+/** sv = users.session_version ตอนออก token — ไม่ตรงกับใน DB แล้วถือว่า logout ไปแล้ว */
+export type SessionClaims = { userId: number; role: "user" | "admin"; sv: number };
 
 /** อ่าน secret จาก env ทุกครั้ง (proxy โหลดแยกจาก env.ts) */
 function secretKey() {
@@ -17,7 +18,7 @@ function secretKey() {
 
 /** สร้าง token สำหรับใส่ cookie หลังสมัคร/ล็อกอินสำเร็จ */
 export async function signSession(claims: SessionClaims): Promise<string> {
-  return new SignJWT({ role: claims.role })
+  return new SignJWT({ role: claims.role, sv: claims.sv })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(claims.userId))
     .setIssuedAt()
@@ -33,7 +34,9 @@ export async function verifySession(token: string | undefined): Promise<SessionC
     const userId = Number(payload.sub);
     const role = payload.role;
     if (!Number.isInteger(userId) || (role !== "user" && role !== "admin")) return null;
-    return { userId, role };
+    // token ที่ออกก่อนมี sv ถือเป็นเวอร์ชัน 0 — ผู้ใช้ที่ล็อกอินค้างไว้ไม่หลุดตอนอัปเดตระบบ
+    const sv = Number.isInteger(payload.sv) ? (payload.sv as number) : 0;
+    return { userId, role, sv };
   } catch {
     return null;
   }

@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { categories, notifications, plans, services, userSubscriptions, users } from "@/db/schema";
 import { monthlySatang } from "@/lib/billing";
 import { addDays, todayInBangkok } from "@/lib/dates";
+import { containsPattern } from "@/lib/like";
 import { fromSatang, toSatang } from "@/lib/money";
 import { ApiError } from "../http";
 
@@ -35,7 +36,9 @@ const accountColumns = {
 export async function listUsers(opts: { q?: string; page?: number }) {
   const q = opts.q?.trim();
   const page = Math.max(1, Math.floor(opts.page ?? 1));
-  const where = q ? or(like(users.name, `%${q}%`), like(users.email, `%${q}%`)) : undefined;
+  const where = q
+    ? or(like(users.name, containsPattern(q)), like(users.email, containsPattern(q)))
+    : undefined;
   const [rows, [{ total }]] = await Promise.all([
     db
       .select(accountColumns)

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { containsPattern } from "../like";
 import { safeNextPath } from "../safe-next";
 
 describe("safeNextPath กัน open redirect หลังล็อกอิน", () => {
@@ -19,5 +20,14 @@ describe("safeNextPath กัน open redirect หลังล็อกอิน
     undefined,
   ])("ปฏิเสธ %j", (next) => {
     expect(safeNextPath(next)).toBeNull();
+  });
+});
+
+describe("containsPattern ค้นหาตามตัวอักษรจริง", () => {
+  it("escape % _ และ \\", () => {
+    expect(containsPattern("net")).toBe("%net%");
+    expect(containsPattern("100%")).toBe("%100\\%%");
+    expect(containsPattern("a_b")).toBe("%a\\_b%");
+    expect(containsPattern("a\\b")).toBe("%a\\\\b%");
   });
 });

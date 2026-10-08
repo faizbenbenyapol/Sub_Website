@@ -3,6 +3,7 @@ import { and, asc, count, eq, inArray, like, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { isDuplicateKey, isMissingReference, isRowReferenced } from "@/db/errors";
 import { categories, plans, priceHistory, services, userSubscriptions } from "@/db/schema";
+import { containsPattern } from "@/lib/like";
 import { decimalToNumber, satangToDecimal, toSatang } from "@/lib/money";
 import type { CategoryCreate, PlanCreate, ServiceCreate } from "@/lib/validation/catalog";
 import { ApiError } from "../http";
@@ -136,7 +137,7 @@ export async function listServicesAdmin(filter: {
     .innerJoin(categories, eq(services.categoryId, categories.id))
     .where(
       and(
-        q ? or(like(services.name, `%${q}%`), like(services.slug, `%${q}%`)) : undefined,
+        q ? or(like(services.name, containsPattern(q)), like(services.slug, containsPattern(q))) : undefined,
         filter.category ? eq(categories.slug, filter.category) : undefined,
       ),
     )

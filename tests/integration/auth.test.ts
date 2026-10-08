@@ -270,3 +270,30 @@ describe("ความปลอดภัยเพิ่มเติม (จา�
     expect(r.status).toBe(403);
   });
 });
+
+describe("logout ยกเลิก token เดิม", () => {
+  it("token ที่ใช้ logout ไปแล้ว (เช่นถูกขโมย) เรียก API ไม่ได้ · ล็อกอินใหม่ได้ token ใหม่ที่ใช้ได้", async () => {
+    const u = await makeUser();
+    const body = { email: u.email, password: PASSWORD };
+    const first = await call(login, "/api/auth/login", { method: "POST", body });
+    const oldToken = /session=([^;]+)/.exec(first.res.headers.get("set-cookie") ?? "")![1];
+    expect((await call(me, "/api/auth/me", { token: oldToken })).status).toBe(200);
+
+    await call(logout, "/api/auth/logout", { method: "POST", token: oldToken });
+    expect((await call(me, "/api/auth/me", { token: oldToken })).status).toBe(401);
+
+    const again = await call(login, "/api/auth/login", { method: "POST", body });
+    const newToken = /session=([^;]+)/.exec(again.res.headers.get("set-cookie") ?? "")![1];
+    expect((await call(me, "/api/auth/me", { token: newToken })).status).toBe(200);
+  });
+
+  it("token แบบเก่าที่ไม่มี sv ยังใช้ได้ (ไม่เตะผู้ใช้ออกตอนอัปเดตระบบ)", async () => {
+    const u = await makeUser();
+    const legacy = await new SignJWT({ role: "user" })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject(String(u.id))
+      .setExpirationTime("1h")
+      .sign(new TextEncoder().encode(process.env.SESSION_SECRET!));
+    expect((await call(me, "/api/auth/me", { token: legacy })).status).toBe(200);
+  });
+});

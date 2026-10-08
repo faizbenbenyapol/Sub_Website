@@ -1,6 +1,6 @@
 import "server-only";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
@@ -47,8 +47,8 @@ export function verifyPassword(password: string, hash: string) {
 }
 
 /** ตั้ง cookie session ลงใน response หลังสมัคร/ล็อกอินสำเร็จ */
-export async function attachSession(res: NextResponse, user: Pick<User, "id" | "role">) {
-  const token = await signSession({ userId: user.id, role: user.role });
+export async function attachSession(res: NextResponse, user: Pick<User, "id" | "role" | "sessionVersion">) {
+  const token = await signSession({ userId: user.id, role: user.role, sv: user.sessionVersion });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
@@ -58,6 +58,17 @@ export async function attachSession(res: NextResponse, user: Pick<User, "id" | "
     maxAge: SESSION_MAX_AGE,
   });
   return res;
+}
+
+/** ทำให้ token ทุกใบของผู้ใช้ใช้ไม่ได้ (logout จากทุกเครื่อง) — ไม่มี session ที่ใช้ได้ก็ไม่ทำอะไร */
+export async function revokeSessions() {
+  const user = await getCurrentUser();
+  if (user) {
+    await db
+      .update(users)
+      .set({ sessionVersion: sql`${users.sessionVersion} + 1` })
+      .where(eq(users.id, user.id));
+  }
 }
 
 /** ลบ cookie session (logout) */
@@ -75,7 +86,8 @@ export async function getCurrentUser(): Promise<User | null> {
   const claims = await verifySession(token);
   if (!claims) return null;
   const [user] = await db.select().from(users).where(eq(users.id, claims.userId)).limit(1);
-  return user ?? null;
+  if (!user || user.sessionVersion !== claims.sv) return null; // logout แล้ว token เก่าใช้ไม่ได้
+  return user;
 }
 
 /** สำหรับ API: ต้องล็อกอินและบัญชีไม่ถูกระงับ ไม่งั้นโยน 401/403 */

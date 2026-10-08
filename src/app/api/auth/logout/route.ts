@@ -1,5 +1,8 @@
-import { clearSession } from "@/server/auth";
+import { clearSession, revokeSessions } from "@/server/auth";
 import { api, noContent } from "@/server/http";
 
-/** ออกจากระบบ — ลบ cookie (เรียกได้แม้ session หมดอายุแล้ว) */
-export const POST = api(async () => clearSession(noContent()));
+/** ออกจากระบบ — ยกเลิก token ทุกใบของผู้ใช้ (token ที่หลุดไปก็ใช้ไม่ได้) แล้วลบ cookie · เรียกได้แม้ session หมดอายุแล้ว */
+export const POST = api(async () => {
+  await revokeSessions();
+  return clearSession(noContent());
+});

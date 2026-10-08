@@ -222,3 +222,12 @@ describe("US-H5 Dashboard Admin", () => {
     expect(data.newUsersDaily.reduce((s: number, d: { count: number }) => s + d.count, 0)).toBe(3);
   });
 });
+
+describe("ค้นหาด้วย % หรือ _ ไม่กลายเป็น wildcard", () => {
+  it("q=% → ไม่พบอะไร (เดิมคืนทุกบริการ)", async () => {
+    await makeCatalog({ serviceName: "Netflix" });
+    expect((await call(listServices, "/api/services?q=%25")).json.data).toEqual([]);
+    expect((await call(listServices, "/api/services?q=_")).json.data).toEqual([]);
+    expect((await call(listServices, "/api/services?q=flix")).json.data).toHaveLength(1);
+  });
+});

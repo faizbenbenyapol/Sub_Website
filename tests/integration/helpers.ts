@@ -19,7 +19,7 @@ export type CallOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   /** ผู้ใช้ที่ล็อกอิน — สร้าง cookie session ที่เซ็นจริง */
-  as?: Pick<User, "id" | "role">;
+  as?: Pick<User, "id" | "role"> & { sessionVersion?: number };
   /** token ดิบ (เช่น token ปลอม) แทน as */
   token?: string;
   params?: Record<string, string>;
@@ -44,7 +44,12 @@ export async function call(handler: unknown, path: string, opts: CallOptions = {
   if (opts.body !== undefined) headers.set("content-type", "application/json");
 
   const jar = new Map<string, string>();
-  if (opts.as) jar.set(SESSION_COOKIE, await signSession({ userId: opts.as.id, role: opts.as.role }));
+  if (opts.as) {
+    jar.set(
+      SESSION_COOKIE,
+      await signSession({ userId: opts.as.id, role: opts.as.role, sv: opts.as.sessionVersion ?? 0 }),
+    );
+  }
   if (opts.token !== undefined) jar.set(SESSION_COOKIE, opts.token);
   (globalThis as { __testCookies?: Map<string, string> }).__testCookies = jar;
 
