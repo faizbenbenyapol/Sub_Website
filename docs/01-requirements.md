@@ -201,7 +201,7 @@ users ─┬─< user_subscriptions >── plans >── services >── categ
 | 6 | อา. 11 ต.ค. | Dashboard ผู้ใช้ + ปฏิทิน ✅, Dashboard Admin + จัดการผู้ใช้ ✅, ระบบแจ้งเตือนทางอีเมล ✅ (โหมด console — รอ Gmail App Password เพื่อส่งจริง) | frontend-developer, backend-developer | **P0 ครบทั้งหมด** ได้รับอีเมลแจ้งเตือนจริง |
 | 7 | จ. 12 ต.ค. | P1: หารค่าบริการ + QR พร้อมเพย์ ✅, ตัวช่วยประหยัด ✅ (เหลือสแกน QR ด้วยแอปธนาคารจริง) | frontend-developer, backend-developer | สแกน QR ด้วยแอปธนาคารแล้วยอดเงินถูกต้อง |
 | 8 | อ. 13 ต.ค. | เทส unit ✅ (72), integration ✅ (103), E2E S1–S6 ✅ (13), ตรวจ responsive + axe ✅, รีวิวโค้ด + ตรวจความปลอดภัย, แก้บั๊ก | test-engineer, e2e-tester, code-reviewer, security-auditor, debugger | เทส P0 ผ่านทั้งหมด ไม่มีปัญหาระดับ Critical/High |
-| 9 | พ. 14 ต.ค. | README, export ไฟล์ SQL, สไลด์, ซ้อมนำเสนอ, อัดคลิป, **ส่งงาน** | docs-writer | ส่งลิงก์ Google Drive ก่อน 23:59 |
+| 9 | พ. 14 ต.ค. | README ✅, export ไฟล์ SQL ✅, สไลด์ ✅ (15 หน้า ใส่ชื่อสมาชิกก่อนใช้), ซ้อมนำเสนอ, อัดคลิป, **ส่งงาน** | docs-writer | ส่งลิงก์ Google Drive ก่อน 23:59 |
 
 > ⚠️ **กฎเหล็ก:** ห้ามเริ่ม P1 จนกว่า P0 จะเสร็จ (สิ้นวันที่ 6) ถ้าวันที่ 6 ยังไม่เสร็จ ให้ตัดตัวช่วยประหยัดก่อน แล้วค่อยตัดระบบหารค่าบริการ
 
