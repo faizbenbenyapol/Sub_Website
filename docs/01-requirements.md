@@ -227,8 +227,8 @@ users ─┬─< user_subscriptions >── plans >── services >── categ
 | 13:00–15:00 | สรุป + ถามตอบ |
 
 ## 9. สิ่งที่ต้องส่ง (Google Drive 1 ลิงก์ต่อกลุ่ม)
-- [ ] Source code ทั้งโปรเจกต์ (**ไม่รวม** `.env` และ `node_modules`)
-- [ ] ไฟล์ SQL สำหรับสร้างฐานข้อมูล + ข้อมูลตัวอย่าง
+- [ ] Source code ทั้งโปรเจกต์ (**ไม่รวม** `.env` และ `node_modules`) — `npm run pack:source` → `submission/tadyang-source.zip`
+- [x] ไฟล์ SQL สำหรับสร้างฐานข้อมูล + ข้อมูลตัวอย่าง — `npm run db:export` → `submission/tadyang.sql` (ทดสอบ import กับ MySQL 8.4 และ MariaDB 10.4 แล้ว)
 - [ ] คลิปวิดีโอนำเสนอ
 
 ---

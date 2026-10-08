@@ -20,7 +20,9 @@
     "db:studio": "drizzle-kit studio",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:int",
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
-    "db:reset": "tsx --env-file=.env scripts/reset.ts && npm run db:seed"
+    "db:reset": "tsx --env-file=.env scripts/reset.ts && npm run db:seed",
+    "db:export": "tsx scripts/export-sql.ts",
+    "pack:source": "git archive --format=zip --prefix=tadyang/ -o submission/tadyang-source.zip HEAD"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
