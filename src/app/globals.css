@@ -63,42 +63,46 @@
   --radius-hero: 28px;
 }
 
-html {
-  background: var(--night);
-}
+/* ค่าเริ่มต้นของ element ต้องอยู่ใน layer base — CSS นอก layer ชนะ utility ของ Tailwind เสมอ
+   (เคยทำให้ text-night บน <a> ไม่ทำงาน ปุ่มลิงก์สีเขียวกลายเป็นตัวอักษรขาว contrast 1.17:1) */
+@layer base {
+  html {
+    background: var(--night);
+  }
 
-/* พื้นหลังเรืองแสง 3 จุด อยู่ที่ body เท่านั้นและไม่ขยับ */
-body {
-  min-height: 100dvh;
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  line-height: 1.75;
-  letter-spacing: 0;
-  -webkit-font-smoothing: antialiased;
-  background:
-    radial-gradient(40rem 32rem at -8% -10%, rgb(59 76 245 / 0.22), transparent 70%),
-    radial-gradient(34rem 28rem at 108% 45%, rgb(255 138 61 / 0.18), transparent 70%),
-    radial-gradient(34rem 26rem at 10% 110%, rgb(200 241 105 / 0.14), transparent 70%), var(--night);
-  background-attachment: fixed;
-}
+  /* พื้นหลังเรืองแสง 3 จุด อยู่ที่ body เท่านั้นและไม่ขยับ */
+  body {
+    min-height: 100dvh;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.75;
+    letter-spacing: 0;
+    -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(40rem 32rem at -8% -10%, rgb(59 76 245 / 0.22), transparent 70%),
+      radial-gradient(34rem 28rem at 108% 45%, rgb(255 138 61 / 0.18), transparent 70%),
+      radial-gradient(34rem 26rem at 10% 110%, rgb(200 241 105 / 0.14), transparent 70%), var(--night);
+    background-attachment: fixed;
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
-  line-height: 1.3;
-  letter-spacing: 0;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--paid);
-  outline-offset: 2px;
-}
+  :focus-visible {
+    outline: 2px solid var(--paid);
+    outline-offset: 2px;
+  }
 
-a {
-  color: inherit;
+  a {
+    color: inherit;
+  }
 }
 
 @layer components {

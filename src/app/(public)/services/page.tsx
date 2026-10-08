@@ -56,7 +56,7 @@ export default async function ServicesPage({ searchParams }: PageProps<"/service
           </button>
         </form>
 
-        <nav aria-label="หมวด" className="-mx-4 mt-5 overflow-x-auto px-4">
+        <nav aria-label="หมวด" className="relative -mx-4 mt-5 overflow-x-auto px-4">
           <ul className="flex gap-2">
             {[{ slug: "", name: "ทั้งหมด" }, ...categories].map((c) => {
               const active = c.slug === category;

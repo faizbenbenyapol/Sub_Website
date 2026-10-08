@@ -99,7 +99,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
         </Button>
       </div>
 
-      <div className="glass mt-4 overflow-x-auto rounded-card">
+      <div className="glass relative mt-4 overflow-x-auto rounded-card">
         <table className="w-full min-w-[600px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">

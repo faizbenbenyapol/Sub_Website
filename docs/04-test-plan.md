@@ -27,7 +27,7 @@
 - `server-only` โยน error นอก React Server → alias เป็นไฟล์ว่างใน `vitest.config.mts`
 - **เวลา:** ทุกฟังก์ชันที่ตัดสินว่า "วันนี้" รับ `today` เป็นพารามิเตอร์ (docs/02 §6) · เทสที่ผ่าน route ใช้ `vi.setSystemTime()` · **ทุกเคสวันที่ต้องรันผ่านทั้งตอนเครื่องตั้ง TZ เป็น UTC และ Asia/Bangkok** (รันชุด unit ซ้ำด้วย `TZ=UTC`)
 - **อีเมล:** `MAIL_TRANSPORT=console` ในเทสทั้งหมด · integration ตรวจผลจากตาราง `notifications` + spy ที่ตัวส่งเมล
-- **E2E:** Playwright ยิง `next build && next start` (ไม่ใช่ dev) ด้วย `CRON_ENABLED=false`, DB `tadyang_test` ที่ seed ด้วย `scripts/seed.ts`
+- **E2E:** `npm run test:e2e` — Playwright ยิง `next build && next start -p 3200` (ไม่ใช่ dev) ด้วย `CRON_ENABLED=false` กับ DB **`tadyang_e2e`** (แยกจาก `tadyang_test` ที่ integration ล้างทุกเทส) ซึ่งสร้าง → reset → seed ใหม่ทุกครั้งที่รัน · ใช้ Edge ที่มากับ Windows (`channel: msedge`) ไม่ต้องดาวน์โหลดเบราว์เซอร์ — เครื่องอื่นตั้ง `PW_CHANNEL=chromium` · `PW_REUSE=1` ใช้ server ที่เปิดค้างไว้ตอนแก้เทส
 
 ---
 

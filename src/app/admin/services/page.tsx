@@ -69,7 +69,7 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
         </button>
       </form>
 
-      <div className="glass mt-6 overflow-x-auto rounded-card">
+      <div className="glass relative mt-6 overflow-x-auto rounded-card">
         <table className="w-full min-w-[640px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">

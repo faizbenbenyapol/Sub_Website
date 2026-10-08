@@ -14,7 +14,7 @@ const ITEMS = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav aria-label="เมนูหลังบ้าน" className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+    <nav aria-label="เมนูหลังบ้าน" className="relative -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
       <ul className="flex gap-1 lg:sticky lg:top-24 lg:flex-col">
         {ITEMS.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
