@@ -1,0 +1,61 @@
+# production บน Ubuntu server: Caddy (HTTPS อัตโนมัติ) → แอป Next.js → MySQL — ดู docs/05-deploy.md
+# ใช้: cp .env.production.example .env  แล้วเติมค่า → docker compose -f docker-compose.prod.yml up -d --build
+# เปิดสู่ภายนอกแค่พอร์ต 80/443 ของ Caddy เท่านั้น — แอปและ DB อยู่ในเครือข่ายภายในของ compose
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tadyang
+      MYSQL_USER: tadyang
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?ตั้ง MYSQL_PASSWORD ใน .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?ตั้ง MYSQL_ROOT_PASSWORD ใน .env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build:
+      context: .
+      args:
+        APP_URL: ${APP_URL:?ตั้ง APP_URL ใน .env เช่น https://tadyang.example.com}
+    restart: unless-stopped
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      # รหัสผ่าน DB ใช้ได้เฉพาะ a-z A-Z 0-9 (อยู่ใน URL ตรง ๆ)
+      DATABASE_URL: mysql://tadyang:${MYSQL_PASSWORD}@db:3306/tadyang
+      CRON_ENABLED: "true"
+      CRON_BASE_URL: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?ตั้ง DOMAIN ใน .env เช่น tadyang.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

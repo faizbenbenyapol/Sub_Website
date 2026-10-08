@@ -6,7 +6,10 @@ const globalForCron = globalThis as unknown as { reminderCronStarted?: boolean }
 
 /** เรียก endpoint งานแจ้งเตือนของเซิร์ฟเวอร์ตัวเอง */
 async function triggerReminders(reason: string) {
-  const url = `${process.env.APP_URL ?? "http://localhost:3000"}/api/cron/reminders`;
+  // CRON_BASE_URL = ที่อยู่ภายในของเซิร์ฟเวอร์ตัวเอง (ใน Docker คือ http://localhost:3000)
+  // ไม่ใช้ APP_URL ตรง ๆ บน production เพราะเรียกโดเมนตัวเองจากในเครื่องมักต่อไม่ติด (hairpin NAT) และต้องอ้อมผ่าน Caddy
+  const base = process.env.CRON_BASE_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+  const url = `${base}/api/cron/reminders`;
   try {
     const res = await fetch(url, {
       method: "POST",

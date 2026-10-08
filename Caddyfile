@@ -1,0 +1,6 @@
+# Caddy ขอใบรับรอง HTTPS จาก Let's Encrypt ให้โดเมนเองอัตโนมัติ (ต้องชี้ A record ของ DOMAIN มาที่ server และเปิดพอร์ต 80/443)
+# ส่ง Host เดิมต่อให้แอป (การกัน CSRF ใน src/server/http.ts เทียบ Origin กับ Host) และเขียน X-Forwarded-For ใหม่จาก IP จริงของผู้ใช้
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.production.example
 
 # ไฟล์ส่งงาน (สร้างด้วย scripts/export-sql)
 /submission/
@@ -47,3 +48,6 @@ next-env.d.ts
 # Playwright
 /test-results/
 /playwright-report/
+
+# สำรองฐานข้อมูลบน server
+/backups/
