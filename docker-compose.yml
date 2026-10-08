@@ -15,7 +15,7 @@ services:
       - --collation-server=utf8mb4_0900_ai_ci
       - --default-time-zone=+00:00
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306" # เปิดเฉพาะเครื่องนี้ — ตอน demo ในวง LAN คนอื่นต่อ DB ไม่ได้
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
@@ -32,7 +32,7 @@ services:
     environment:
       PMA_HOST: db
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80" # phpMyAdmin ใช้รหัส dev — ห้ามเปิดให้เครื่องอื่นเข้า
     depends_on:
       db:
         condition: service_healthy

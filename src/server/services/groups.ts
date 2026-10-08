@@ -17,10 +17,11 @@ import { escapeHtml } from "@/lib/email-templates";
 import { formatBaht, fromSatang, satangToDecimal, toSatang } from "@/lib/money";
 import { maskPromptpayId, promptpayPayload } from "@/lib/promptpay";
 import { splitEqual, validateCustomSplit } from "@/lib/split";
-import type { GroupCreate, MemberInput } from "@/lib/validation/group";
+import { MAX_MEMBERS, type GroupCreate, type MemberInput } from "@/lib/validation/group";
 import { env } from "../env";
 import { ApiError } from "../http";
 import { sendMail } from "../mailer";
+import { hit } from "../rate-limit";
 
 // หารค่าบริการ (US-F1–F3) — ทุกฟังก์ชันของเจ้าของกรองด้วย owner_id ใน SQL; หน้าจ่ายเงินเข้าถึงด้วย token เท่านั้น
 
@@ -42,6 +43,7 @@ export type GroupSummaryDto = {
   memberCount: number;
   paidCount: number;
   period: string;
+  cancelled: boolean; // รายการที่หารถูกยกเลิกแล้ว — หน้าจ่ายหยุดแสดง QR และเตือนไม่ได้
 };
 export type GroupDetailDto = GroupSummaryDto & {
   promptpayIdMasked: string;
@@ -50,8 +52,13 @@ export type GroupDetailDto = GroupSummaryDto & {
   members: GroupMemberDto[];
 };
 
+/** db หรือ tx ของทรานแซกชัน — ฟังก์ชันที่ต้องทำงานได้ทั้งสองแบบรับตัวนี้ */
+export type Executor = Pick<typeof db, "select" | "update" | "insert" | "delete">;
+
 const notFound = () => new ApiError(404, "NOT_FOUND", "ไม่พบกลุ่มนี้");
 const newToken = () => randomBytes(32).toString("base64url"); // 43 ตัวอักษร เดาไม่ได้
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REMINDERS_PER_OWNER_DAY = 20;
 export const currentPeriod = () => todayInBangkok().slice(0, 7);
 
 /** กลุ่มของเจ้าของพร้อมรายการที่หาร — ไม่ใช่ของตัวเองโยน 404 */
@@ -111,6 +118,7 @@ export async function getGroup(
       logoUrl: service?.logoUrl ?? null,
     },
     total: fromSatang(total),
+    cancelled: sub.status === "cancelled",
     memberCount: members.length,
     paidCount: members.filter((m) => m.status === "paid").length,
     period,
@@ -146,6 +154,7 @@ export async function listGroups(ownerId: number, period = currentPeriod()): Pro
         logoUrl: service?.logoUrl ?? null,
       },
       total: fromSatang(toSatang(sub.price)),
+      cancelled: sub.status === "cancelled",
       memberCount: mine.length,
       paidCount: mine.filter((r) => r.payment?.status === "paid").length,
       period,
@@ -185,14 +194,19 @@ function memberAmounts(
 }
 
 /** คำนวณยอดใหม่ทั้งกลุ่มเมื่อเป็นโหมดหารเท่ากัน (หลังเพิ่ม/ลบสมาชิก) */
-async function rebalance(groupId: number, totalSatang: number) {
-  const members = await db
+async function rebalance(groupId: number, totalSatang: number, exec: Executor = db) {
+  const members = await exec
     .select({ id: groupMembers.id })
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId));
   if (members.length === 0) return;
   const share = satangToDecimal(splitEqual(totalSatang, members.length).member);
-  await db.update(groupMembers).set({ amount: share }).where(eq(groupMembers.groupId, groupId));
+  await exec.update(groupMembers).set({ amount: share }).where(eq(groupMembers.groupId, groupId));
+}
+
+/** ล็อกแถวกลุ่มจนจบทรานแซกชัน — การเพิ่ม/ลบสมาชิกพร้อมกันจึงเข้าแถวทีละคำขอ (กันเกิน 10 คน/ยอดเพี้ยน) */
+async function lockGroup(tx: Executor, groupId: number) {
+  await tx.select({ id: shareGroups.id }).from(shareGroups).where(eq(shareGroups.id, groupId)).for("update");
 }
 
 /**
@@ -202,7 +216,7 @@ async function rebalance(groupId: number, totalSatang: number) {
 export async function prepareGroupForSubscriptionChange(
   subscriptionId: number,
   change: { priceSatang?: number; billingCycle?: "monthly" | "yearly" },
-): Promise<(() => Promise<void>) | null> {
+): Promise<((tx: Executor) => Promise<void>) | null> {
   const [group] = await db
     .select({ id: shareGroups.id, splitMode: shareGroups.splitMode })
     .from(shareGroups)
@@ -216,7 +230,7 @@ export async function prepareGroupForSubscriptionChange(
   }
   const price = change.priceSatang;
   if (price === undefined) return null;
-  if (group.splitMode === "equal") return () => rebalance(group.id, price);
+  if (group.splitMode === "equal") return (tx) => rebalance(group.id, price, tx);
   const members = await db
     .select({ amount: groupMembers.amount })
     .from(groupMembers)
@@ -317,25 +331,30 @@ export async function deleteGroup(ownerId: number, groupId: number) {
 export async function addMember(ownerId: number, groupId: number, input: MemberInput) {
   const { group, sub } = await loadGroup(ownerId, groupId);
   const total = toSatang(sub.price);
-  const existing = await db.select().from(groupMembers).where(eq(groupMembers.groupId, groupId));
-  if (existing.length >= 10) throw new ApiError(400, "VALIDATION_ERROR", "สมาชิกได้ไม่เกิน 10 คน");
-  let amount = 0;
-  if (group.splitMode === "custom") {
-    if (input.amount === undefined) {
-      throw new ApiError(400, "VALIDATION_ERROR", "กรุณากรอกยอดของสมาชิก", { amount: "กรุณากรอกยอด" });
+  await db.transaction(async (tx) => {
+    await lockGroup(tx, groupId);
+    const existing = await tx.select().from(groupMembers).where(eq(groupMembers.groupId, groupId));
+    if (existing.length >= MAX_MEMBERS) {
+      throw new ApiError(400, "VALIDATION_ERROR", `สมาชิกได้ไม่เกิน ${MAX_MEMBERS} คน`);
     }
-    amount = toSatang(input.amount);
-    const problem = validateCustomSplit(total, [...existing.map((m) => toSatang(m.amount)), amount]);
-    if (problem) throw new ApiError(400, "VALIDATION_ERROR", problem, { amount: problem });
-  }
-  await db.insert(groupMembers).values({
-    groupId,
-    name: input.name,
-    email: input.email ?? null,
-    amount: satangToDecimal(amount),
-    payToken: newToken(),
+    let amount = 0;
+    if (group.splitMode === "custom") {
+      if (input.amount === undefined) {
+        throw new ApiError(400, "VALIDATION_ERROR", "กรุณากรอกยอดของสมาชิก", { amount: "กรุณากรอกยอด" });
+      }
+      amount = toSatang(input.amount);
+      const problem = validateCustomSplit(total, [...existing.map((m) => toSatang(m.amount)), amount]);
+      if (problem) throw new ApiError(400, "VALIDATION_ERROR", problem, { amount: problem });
+    }
+    await tx.insert(groupMembers).values({
+      groupId,
+      name: input.name,
+      email: input.email ?? null,
+      amount: satangToDecimal(amount),
+      payToken: newToken(),
+    });
+    if (group.splitMode === "equal") await rebalance(groupId, total, tx);
   });
-  if (group.splitMode === "equal") await rebalance(groupId, total);
   return getGroup(ownerId, groupId);
 }
 
@@ -370,11 +389,14 @@ export async function updateMember(
 /** ลบสมาชิก — ลิงก์จ่ายเงินเดิมใช้ไม่ได้ทันที */
 export async function removeMember(ownerId: number, groupId: number, memberId: number) {
   const { group, sub } = await loadGroup(ownerId, groupId);
-  const [result] = await db
-    .delete(groupMembers)
-    .where(and(eq(groupMembers.id, memberId), eq(groupMembers.groupId, groupId)));
-  if (result.affectedRows === 0) throw new ApiError(404, "NOT_FOUND", "ไม่พบสมาชิกนี้");
-  if (group.splitMode === "equal") await rebalance(groupId, toSatang(sub.price));
+  await db.transaction(async (tx) => {
+    await lockGroup(tx, groupId);
+    const [result] = await tx
+      .delete(groupMembers)
+      .where(and(eq(groupMembers.id, memberId), eq(groupMembers.groupId, groupId)));
+    if (result.affectedRows === 0) throw new ApiError(404, "NOT_FOUND", "ไม่พบสมาชิกนี้");
+    if (group.splitMode === "equal") await rebalance(groupId, toSatang(sub.price), tx);
+  });
   return getGroup(ownerId, groupId);
 }
 
@@ -405,10 +427,21 @@ export async function remindMember(ownerId: number, groupId: number, memberId: n
   const member = detail.members.find((m) => m.id === memberId);
   if (!member) throw new ApiError(404, "NOT_FOUND", "ไม่พบสมาชิกนี้");
   if (!member.email) throw new ApiError(400, "VALIDATION_ERROR", "สมาชิกคนนี้ไม่มีอีเมล");
+  if (detail.cancelled) {
+    throw new ApiError(400, "VALIDATION_ERROR", "รายการนี้ยกเลิกแล้ว เตือนเก็บเงินไม่ได้");
+  }
+  if (member.amount === 0) throw new ApiError(400, "VALIDATION_ERROR", `${member.name} ไม่มียอดต้องจ่าย`);
   if (member.status === "paid")
     throw new ApiError(400, "VALIDATION_ERROR", `${member.name} จ่ายเดือนนี้แล้ว`);
   if (member.remindedAt && todayInBangkok(new Date(member.remindedAt)) === todayInBangkok()) {
     throw new ApiError(429, "RATE_LIMITED", `วันนี้เตือน ${member.name} ไปแล้ว ลองพรุ่งนี้`);
+  }
+  // กันใช้เป็นช่องส่งสแปมในนามอีเมลของระบบ: ลบแล้วเพิ่มสมาชิกใหม่ได้ id ใหม่ จึงจำกัดซ้ำด้วยอีเมลผู้รับ + ยอดรวมต่อเจ้าของ
+  if (!hit(`remind-owner:${ownerId}`, REMINDERS_PER_OWNER_DAY, DAY_MS)) {
+    throw new ApiError(429, "RATE_LIMITED", "วันนี้ส่งอีเมลเตือนครบโควตาแล้ว ลองพรุ่งนี้");
+  }
+  if (!hit(`remind-to:${ownerId}:${member.email}`, 1, DAY_MS)) {
+    throw new ApiError(429, "RATE_LIMITED", `วันนี้เตือน ${member.email} ไปแล้ว ลองพรุ่งนี้`);
   }
   const [owner] = await db.select({ name: users.name }).from(users).where(eq(users.id, ownerId)).limit(1);
   const amount = formatBaht(member.amount);
@@ -435,6 +468,7 @@ export async function getPayPage(token: string) {
       sub: userSubscriptions,
       service: services,
       ownerName: users.name,
+      ownerStatus: users.status,
       payment: memberPayments,
     })
     .from(groupMembers)
@@ -461,5 +495,7 @@ export async function getPayPage(token: string) {
     promptpayIdMasked: maskPromptpayId(row.group.promptpayId),
     payload: promptpayPayload(row.group.promptpayId, amount),
     status: row.payment?.status ?? "unpaid",
+    // รายการถูกยกเลิก หรือเจ้าของถูกระงับ → หยุดเก็บเงิน (ไม่โชว์ QR)
+    closed: row.sub.status === "cancelled" || row.ownerStatus === "suspended",
   };
 }

@@ -6,16 +6,16 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { apiFetch } from "@/lib/api-client";
+import { safeNextPath } from "@/lib/safe-next";
 import { fieldErrors } from "@/lib/validation";
 import { loginSchema, registerSchema } from "@/lib/validation/auth";
 
 type Mode = "login" | "register";
 type Me = { role: "user" | "admin" };
 
-/** ป้องกัน open redirect: รับเฉพาะ path ภายในเว็บ */
+/** ป้องกัน open redirect: รับเฉพาะ path ภายในเว็บ ไม่งั้นไปหน้าแรกตาม role */
 function safeNext(next: string | undefined, role: Me["role"]) {
-  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-  return role === "admin" ? "/admin" : "/dashboard";
+  return safeNextPath(next) ?? (role === "admin" ? "/admin" : "/dashboard");
 }
 
 /** ฟอร์มสมัครสมาชิก / เข้าสู่ระบบ — validate ด้วย schema เดียวกับ API ก่อนส่ง */

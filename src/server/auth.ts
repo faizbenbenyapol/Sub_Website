@@ -7,6 +7,7 @@ import type { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users, type User } from "@/db/schema";
 import { SESSION_COOKIE, SESSION_MAX_AGE, signSession, verifySession } from "@/lib/session-token";
+import { env } from "./env";
 import { ApiError } from "./http";
 
 const BCRYPT_COST = 10;
@@ -51,7 +52,8 @@ export async function attachSession(res: NextResponse, user: Pick<User, "id" | "
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // ตามโปรโตคอลจริงของ APP_URL: demo ผ่าน http://IP ในวง LAN ด้วย next start ต้องไม่ใช่ Secure ไม่งั้นมือถือล็อกอินไม่ติด
+    secure: env.APP_URL.startsWith("https://"),
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

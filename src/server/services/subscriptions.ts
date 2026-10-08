@@ -220,26 +220,37 @@ export async function updateSubscription(
   }
 
   const { status, price, nextBillingDate, ...rest } = input;
+  // ฟอร์มแก้ไขส่งวันตัดเงินที่แสดงอยู่กลับมาทุกครั้ง (ซึ่งอาจถูก clamp แล้ว เช่น anchor 31 → 30 เม.ย.)
+  // จึงคำนวณ anchor ใหม่เฉพาะเมื่อผู้ใช้เปลี่ยนวันจริง ไม่งั้น anchor ไหลแบบเงียบ ๆ (กฎ 3.3.2)
+  const shownDate =
+    current.status === "active"
+      ? rollForward(current.nextBillingDate, current.billingCycle, current.billingAnchorDay, todayInBangkok())
+      : current.nextBillingDate;
+  const dateChanged = nextBillingDate !== undefined && nextBillingDate !== shownDate;
   const syncGroup = await prepareGroupForSubscriptionChange(id, {
     priceSatang: price === undefined ? undefined : toSatang(price),
     billingCycle: input.billingCycle,
   });
   try {
-    await db
-      .update(userSubscriptions)
-      .set({
-        ...rest,
-        ...(price !== undefined && { price: satangToDecimal(toSatang(price)) }),
-        ...(nextBillingDate && { nextBillingDate, billingAnchorDay: anchorDayOf(nextBillingDate) }),
-        ...(status === "cancelled" && current.status !== "cancelled" && { status, cancelledAt: new Date() }),
-        ...(reactivating && { status, cancelledAt: null }),
-      })
-      .where(and(eq(userSubscriptions.id, id), eq(userSubscriptions.userId, userId)));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(userSubscriptions)
+        .set({
+          ...rest,
+          ...(price !== undefined && { price: satangToDecimal(toSatang(price)) }),
+          ...(nextBillingDate && { nextBillingDate }),
+          ...(nextBillingDate && dateChanged && { billingAnchorDay: anchorDayOf(nextBillingDate) }),
+          ...(status === "cancelled" &&
+            current.status !== "cancelled" && { status, cancelledAt: new Date() }),
+          ...(reactivating && { status, cancelledAt: null }),
+        })
+        .where(and(eq(userSubscriptions.id, id), eq(userSubscriptions.userId, userId)));
+      await syncGroup?.(tx);
+    });
   } catch (err) {
     if (isMissingReference(err)) throw missingCategory();
     throw err;
   }
-  await syncGroup?.();
   return getSubscription(userId, id);
 }
 

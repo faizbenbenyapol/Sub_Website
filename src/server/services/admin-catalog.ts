@@ -275,10 +275,17 @@ export async function deletePlan(id: number): Promise<void> {
   if (n > 0) {
     throw new ApiError(409, "IN_USE", `มีผู้ใช้ผูกแพ็กเกจนี้อยู่ ${n} รายการ ลบไม่ได้ — ซ่อนแพ็กเกจแทน`);
   }
-  await db.transaction(async (tx) => {
-    await tx.delete(plans).where(eq(plans.id, id));
-    await touchService(tx, plan.serviceId);
-  });
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(plans).where(eq(plans.id, id));
+      await touchService(tx, plan.serviceId);
+    });
+  } catch (err) {
+    // ผู้ใช้เพิ่มรายการเข้ามาระหว่างนับกับลบ → FK RESTRICT
+    if (isRowReferenced(err))
+      throw new ApiError(409, "IN_USE", "มีผู้ใช้ผูกแพ็กเกจนี้อยู่ ลบไม่ได้ — ซ่อนแพ็กเกจแทน");
+    throw err;
+  }
 }
 
 /** ประวัติการแก้ราคาทุกแพ็กเกจของบริการ (ใหม่ → เก่า) สำหรับหน้าแก้ไขของ admin */

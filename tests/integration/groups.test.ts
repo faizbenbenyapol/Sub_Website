@@ -359,3 +359,99 @@ describe("แก้รายการที่มีกลุ่มหารแ�
     expect(fine.json.data.price).toBe(300);
   });
 });
+
+describe("รอบ code review / security audit", () => {
+  it("ลบสมาชิกแล้วเพิ่มอีเมลเดิมกลับมา → เตือนซ้ำวันเดียวกันไม่ได้", async () => {
+    const { owner, subId } = await setup();
+    const g = (
+      await create(owner, {
+        subscriptionId: subId,
+        promptpayId: PROMPTPAY,
+        splitMode: "equal",
+        members: [{ name: "เหยื่อ", email: "victim@x.com" }],
+      })
+    ).json.data;
+    const params = { id: String(g.id) };
+    const first = g.members[0];
+    expect(
+      (
+        await call(remind, "/x", {
+          method: "POST",
+          as: owner,
+          params: { ...params, memberId: String(first.id) },
+        })
+      ).status,
+    ).toBe(204);
+    await call(removeMember, "/x", {
+      method: "DELETE",
+      as: owner,
+      params: { ...params, memberId: String(first.id) },
+    });
+    const added = await call(addMember, "/x", {
+      method: "POST",
+      as: owner,
+      params,
+      body: { name: "เหยื่อ", email: "victim@x.com" },
+    });
+    const again = added.json.data.members[0];
+    const r = await call(remind, "/x", {
+      method: "POST",
+      as: owner,
+      params: { ...params, memberId: String(again.id) },
+    });
+    expect(r.status).toBe(429);
+  });
+
+  it("ยกเลิกรายการ → หน้าจ่าย closed, เตือนไม่ได้, กลุ่มมีป้าย cancelled", async () => {
+    const { PATCH } = await import("@/app/api/subscriptions/[id]/route");
+    const { owner, subId } = await setup();
+    const g = (
+      await create(owner, {
+        subscriptionId: subId,
+        promptpayId: PROMPTPAY,
+        splitMode: "equal",
+        members: [{ name: "ก", email: "k@x.com" }],
+      })
+    ).json.data;
+    expect((await getPayPage(tokenOf(g.members[0].payUrl)))!.closed).toBe(false);
+    await call(PATCH, "/x", {
+      method: "PATCH",
+      as: owner,
+      params: { id: String(subId) },
+      body: { status: "cancelled" },
+    });
+    expect((await getPayPage(tokenOf(g.members[0].payUrl)))!.closed).toBe(true);
+    const r = await call(remind, "/x", {
+      method: "POST",
+      as: owner,
+      params: { id: String(g.id), memberId: String(g.members[0].id) },
+    });
+    expect(r.status).toBe(400);
+    expect(
+      (await call(getGroup, "/x", { as: owner, params: { id: String(g.id) } })).json.data.cancelled,
+    ).toBe(true);
+  });
+
+  it("เพิ่มสมาชิกพร้อมกันเกินเพดาน 10 คนไม่ได้", async () => {
+    const { owner, subId } = await setup();
+    const g = (
+      await create(owner, {
+        subscriptionId: subId,
+        promptpayId: PROMPTPAY,
+        splitMode: "equal",
+        members: members(8),
+      })
+    ).json.data;
+    const params = { id: String(g.id) };
+    const results = await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
+        call(addMember, "/x", { method: "POST", as: owner, params, body: { name: `คนที่ ${i}` } }),
+      ),
+    );
+    expect(results.filter((r) => r.status === 201 || r.status === 200)).toHaveLength(2);
+    const after = (await call(getGroup, "/x", { as: owner, params })).json.data;
+    expect(after.memberCount).toBe(10);
+    // ยอดหารเท่ากันถูกต้องหลังเพิ่มพร้อมกัน: 419 / 11 = 38.09 ต่อคน
+    expect(new Set(after.members.map((m: { amount: number }) => m.amount))).toEqual(new Set([38.09]));
+  });
+});

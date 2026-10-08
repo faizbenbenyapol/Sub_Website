@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { bangkokDate, login, registerNewUser } from "./helpers";
+import { bangkokDate, DEMO, login, registerNewUser } from "./helpers";
 
 // S1 happy path ผู้ใช้ใหม่ · S2 กันสิทธิ์ · S4 ยกเลิก/ลบ (docs/04-test-plan.md ข้อ 5)
 
@@ -52,6 +52,20 @@ test("S2 ไม่ล็อกอิน → login พร้อม next · user �
 }) => {
   await page.goto("/subscriptions");
   await expect(page).toHaveURL(/\/login\?next=%2Fsubscriptions/);
+
+  // security headers (กัน clickjacking / MIME sniffing) และไม่บอกว่าใช้ Next.js
+  const headers = (await page.request.get("/login")).headers();
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-powered-by"]).toBeUndefined();
+
+  // open redirect: ?next ที่ชี้ออกนอกเว็บถูกเปลี่ยนเป็นหน้าแรกของผู้ใช้
+  await page.goto(`/login?next=${encodeURIComponent("/\t/evil.example")}`);
+  await page.getByLabel("อีเมล").fill(DEMO.email);
+  await page.getByLabel("รหัสผ่าน").fill(DEMO.password);
+  await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
+  await expect(page).toHaveURL(/localhost:3200\/dashboard/);
+  await page.context().clearCookies();
 
   const account = await registerNewUser(page);
   await page.goto("/admin");

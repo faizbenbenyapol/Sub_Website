@@ -51,6 +51,12 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           </Link>
         </div>
       </div>
+      {group.cancelled && (
+        <p role="status" className="mt-4 border-l-[3px] border-due pl-3">
+          รายการ {group.subscription.name} ถูกยกเลิกแล้ว — หน้าจ่ายของเพื่อนขึ้นว่าไม่ต้องจ่ายแล้ว
+          และส่งอีเมลเตือนไม่ได้
+        </p>
+      )}
       <GroupManager
         group={group}
         prevPeriod={shift(period, -1)}

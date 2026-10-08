@@ -45,6 +45,7 @@ function loadCandidates() {
       customName: userSubscriptions.customName,
       serviceName: services.name,
       serviceSlug: services.slug,
+      serviceActive: services.isActive,
     })
     .from(userSubscriptions)
     .innerJoin(users, eq(userSubscriptions.userId, users.id))
@@ -77,9 +78,11 @@ function pickDue(candidates: Candidate[], today: string): Due[] {
  * ส่งแล้ว = ข้าม, พลาด = นับ attempts แล้วรอบถัดไปลองใหม่จนครบ MAX_ATTEMPTS
  */
 async function deliver({ c, type, dueDate }: Due, today: string): Promise<"sent" | "skipped" | "failed"> {
-  const path = c.serviceSlug
-    ? `/services/${c.serviceSlug}#cancel`
-    : `/subscriptions/${c.subscriptionId}/edit`;
+  // บริการที่ Admin ซ่อนแล้วเปิดหน้าคลังไม่ได้ (404) → พาไปหน้าแก้รายการแทน
+  const path =
+    c.serviceSlug && c.serviceActive
+      ? `/services/${c.serviceSlug}#cancel`
+      : `/subscriptions/${c.subscriptionId}/edit`;
   const mail = reminderEmail({
     kind: type === "trial_ending" ? "trial_end" : "billing",
     serviceName: c.serviceName ?? c.customName ?? "",

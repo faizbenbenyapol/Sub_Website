@@ -53,8 +53,17 @@ function assertSameOrigin(req: Request) {
   if (req.method === "GET" || req.method === "HEAD") return;
   const origin = req.headers.get("origin");
   const host = req.headers.get("host");
-  if (!origin || !host || new URL(origin).host !== host) {
+  if (!origin || !host || originHost(origin) !== host) {
     throw new ApiError(403, "FORBIDDEN", "คำขอนี้ไม่ได้มาจากหน้าเว็บของระบบ");
+  }
+}
+
+/** host ของ Origin header — "null" (iframe sandbox/redirect ข้ามโดเมน) หรือค่าแปลก ๆ คืน null แทนการโยน 500 */
+function originHost(origin: string): string | null {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return null;
   }
 }
 
@@ -104,6 +113,15 @@ export async function idParam(params: Promise<Record<string, string>>, key = "id
     throw new ApiError(404, "NOT_FOUND", "ไม่พบข้อมูลที่ต้องการ");
   }
   return id;
+}
+
+/**
+ * IP ของผู้เรียก สำหรับ rate limit เท่านั้น (ไม่ใช้ตัดสินสิทธิ์) — หลัง reverse proxy อ่านจาก x-forwarded-for ตัวแรก
+ * เรียกตรงไม่มี header → "local" (ทุกคำขอแชร์ถังเดียวกัน จึงตั้ง limit ต่อ IP ให้หลวมพอ)
+ */
+export function clientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return forwarded || req.headers.get("x-real-ip") || "local";
 }
 
 /** อ่าน query string แบบ optional (ค่าว่างถือว่าไม่ได้ส่ง) */

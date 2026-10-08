@@ -10,5 +10,8 @@ export const POST = api(async () => {
   if (!hit(`test-email:${user.id}`, 1, 60_000)) {
     throw new ApiError(429, "RATE_LIMITED", "เพิ่งส่งไปเมื่อสักครู่ รอ 1 นาทีแล้วลองใหม่");
   }
+  if (!hit(`test-email-day:${user.id}`, 10, 24 * 60 * 60 * 1000)) {
+    throw new ApiError(429, "RATE_LIMITED", "วันนี้ส่งอีเมลทดสอบครบ 10 ครั้งแล้ว ลองพรุ่งนี้");
+  }
   return ok(await sendTestEmail(user, todayInBangkok()));
 });

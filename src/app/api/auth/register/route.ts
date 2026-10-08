@@ -4,11 +4,16 @@ import { isDuplicateKey } from "@/db/errors";
 import { users } from "@/db/schema";
 import { registerSchema } from "@/lib/validation/auth";
 import { attachSession, hashPassword, toPublicUser } from "@/server/auth";
-import { api, ApiError, ok, parseBody } from "@/server/http";
+import { api, ApiError, clientIp, ok, parseBody } from "@/server/http";
+import { hit } from "@/server/rate-limit";
 
 /** สมัครสมาชิก — สร้างบัญชี role user เสมอ (ไม่รับ role จาก body) แล้วเข้าสู่ระบบให้ทันที */
 export const POST = api(async (req) => {
   const input = await parseBody(req, registerSchema);
+  // สมัครได้โดยไม่ยืนยันอีเมล จึงจำกัดต่อ IP กันการสร้างบัญชีจำนวนมากไว้ยิงอีเมลทดสอบ/เตือนสมาชิก
+  if (!hit(`register-ip:${clientIp(req)}`, 20, 60 * 60 * 1000)) {
+    throw new ApiError(429, "RATE_LIMITED", "สมัครจากเครื่องนี้หลายครั้งเกินไป รอสักครู่แล้วลองใหม่");
+  }
   const passwordHash = await hashPassword(input.password);
 
   let id: number;

@@ -237,3 +237,36 @@ describe("A3-2 role user เรียก /api/admin/* ทุกเส้น → 
     expect((await call(GET, "/api/admin/dashboard", { as: a })).status).toBe(403);
   });
 });
+
+describe("ความปลอดภัยเพิ่มเติม (จากรอบ security audit)", () => {
+  it("ยิงรหัสผิดพร้อมกัน 20 ครั้ง → ผ่านไปตรวจรหัสได้แค่ 5 ที่เหลือ 429", async () => {
+    const u = await makeUser();
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        call(login, "/api/auth/login", { method: "POST", body: { email: u.email, password: "nope" } }),
+      ),
+    );
+    const statuses = results.map((r) => r.status);
+    expect(statuses.filter((s) => s === 401)).toHaveLength(5);
+    expect(statuses.filter((s) => s === 429)).toHaveLength(15);
+  });
+
+  it("ล็อกอินสำเร็จแล้วตัวนับรีเซ็ต", async () => {
+    const u = await makeUser();
+    for (let i = 0; i < 4; i++) {
+      await call(login, "/api/auth/login", { method: "POST", body: { email: u.email, password: "nope" } });
+    }
+    const body = { email: u.email, password: PASSWORD };
+    expect((await call(login, "/api/auth/login", { method: "POST", body })).status).toBe(200);
+    expect((await call(login, "/api/auth/login", { method: "POST", body })).status).toBe(200);
+  });
+
+  it("Origin: null → 403 ไม่ใช่ 500", async () => {
+    const r = await call(login, "/api/auth/login", {
+      method: "POST",
+      body: { email: "a@b.c", password: "x" },
+      origin: "null",
+    });
+    expect(r.status).toBe(403);
+  });
+});

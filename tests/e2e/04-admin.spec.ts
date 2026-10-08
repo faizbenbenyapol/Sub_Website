@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ADMIN, login } from "./helpers";
 
-// S3 Admin แก้คลัง — รันท้ายสุดเพราะซ่อน Netflix ซึ่ง scenario อื่นใช้
+// S3 Admin แก้คลัง — ซ่อน Microsoft 365 (บัญชี demo ใช้อยู่ แต่ scenario อื่นไม่ได้แตะ) เพราะ project mobile รันหลัง desktop
 
 test("S3 เพิ่มบริการ+แพ็กเกจ → แก้ราคา → ฝั่งผู้ใช้เห็น · ลบบริการที่มีคนใช้ → ซ่อนแทน → ผู้ใช้หาไม่เจอ", async ({
   page,
@@ -36,17 +36,17 @@ test("S3 เพิ่มบริการ+แพ็กเกจ → แก้�
   await expect(page.getByText(/฿299/).first()).toBeVisible();
   await expect(page.getByText("กดยกเลิกการเป็นสมาชิก")).toBeVisible();
 
-  // H2-2 ลบ Netflix (บัญชี demo ใช้อยู่) → dialog แนะนำให้ซ่อน → ซ่อน → ผู้ใช้หาไม่เจอ
-  await page.goto("/admin/services?q=Netflix");
-  await page.getByRole("link", { name: "Netflix" }).first().click();
-  await page.getByRole("button", { name: "ลบ Netflix" }).click();
+  // H2-2 ลบ Microsoft 365 (บัญชี demo ใช้อยู่) → dialog แนะนำให้ซ่อน → ซ่อน → ผู้ใช้หาไม่เจอ
+  await page.goto("/admin/services?q=Microsoft");
+  await page.getByRole("link", { name: "Microsoft 365" }).first().click();
+  await page.getByRole("button", { name: "ลบ Microsoft 365" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "ลบบริการ" }).click();
-  await expect(page.getByRole("dialog")).toContainText("ลบ Netflix ไม่ได้");
+  await expect(page.getByRole("dialog")).toContainText("ลบ Microsoft 365 ไม่ได้");
   await page.getByRole("dialog").getByRole("button", { name: "ซ่อนบริการแทน" }).click();
-  await expect(page.getByText("ซ่อน Netflix จากคลังบริการแล้ว")).toBeVisible();
+  await expect(page.getByText("ซ่อน Microsoft 365 จากคลังบริการแล้ว")).toBeVisible();
 
-  const res = await page.goto("/services/netflix");
+  const res = await page.goto("/services/microsoft-365");
   expect(res?.status()).toBe(404);
-  await page.goto("/services?q=netflix");
-  await expect(page.getByRole("link", { name: /Netflix/ })).toHaveCount(0);
+  await page.goto("/services?q=microsoft");
+  await expect(page.getByRole("link", { name: /Microsoft 365/ })).toHaveCount(0);
 });

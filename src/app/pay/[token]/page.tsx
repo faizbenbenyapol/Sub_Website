@@ -16,8 +16,13 @@ export default async function PayPage({ params }: PageProps<"/pay/[token]">) {
   const page = await getPayPage((await params).token);
   if (!page) notFound();
   // SVG สร้างจาก payload ที่เป็นตัวเลข/ตัวอักษรตามมาตรฐาน EMVCo ฝั่ง server — ไม่มีข้อความจากผู้ใช้ปนอยู่
-  const qrSvg = await QRCode.toString(page.payload, { type: "svg", margin: 2, errorCorrectionLevel: "M" });
   const paid = page.status === "paid";
+  // ไม่ต้องจ่าย: เจ้าของเลิกหาร/บัญชีถูกระงับ หรือยอดเป็น 0 (QR ที่ไม่มียอดจะให้เพื่อนกรอกเองซึ่งขัดกับข้อความในหน้า)
+  const nothingToPay = page.closed || page.amount === 0;
+  const qrSvg =
+    paid || nothingToPay
+      ? ""
+      : await QRCode.toString(page.payload, { type: "svg", margin: 2, errorCorrectionLevel: "M" });
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-6">
@@ -34,13 +39,25 @@ export default async function PayPage({ params }: PageProps<"/pay/[token]">) {
         </p>
       </section>
 
-      {paid ? (
+      {page.closed ? (
+        <section className="glass mt-6 rounded-card p-6 text-center">
+          <p className="text-h3 font-bold">ไม่ต้องจ่ายแล้ว</p>
+          <p className="mt-2 text-text-muted">
+            {page.ownerName} เลิกหารค่า {page.serviceName} แล้ว ลิงก์นี้ไม่ใช้เก็บเงินอีก
+          </p>
+        </section>
+      ) : paid ? (
         <section className="glass mt-6 rounded-card p-6 text-center">
           <p className="text-h3 font-bold">
             <span aria-hidden className="mr-2 inline-block size-3 rounded-full bg-paid" />
             จ่ายแล้ว
           </p>
           <p className="mt-2 text-text-muted">{page.ownerName} ทำเครื่องหมายว่าได้รับเงินเดือนนี้แล้ว</p>
+        </section>
+      ) : nothingToPay ? (
+        <section className="glass mt-6 rounded-card p-6 text-center">
+          <p className="text-h3 font-bold">ไม่มียอดต้องจ่ายเดือนนี้</p>
+          <p className="mt-2 text-text-muted">{page.ownerName} ไม่ได้ตั้งยอดให้คุณในกลุ่มนี้</p>
         </section>
       ) : (
         <section aria-labelledby="qr-heading" className="mt-6 flex flex-col items-center">

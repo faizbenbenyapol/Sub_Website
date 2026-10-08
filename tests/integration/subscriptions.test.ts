@@ -307,3 +307,37 @@ describe("H3-2 ประวัติราคา (ทางเดียวกั
     expect(plan.name).toBe("รายเดือนใหม่");
   });
 });
+
+describe("กฎ 3.3.2 anchor day ไม่ไหลเมื่อแก้รายการ", () => {
+  it("รายการ anchor 31 ที่ถูก clamp เป็นวันที่ 30 → แก้แค่หมายเหตุ (ฟอร์มส่งวันเดิมมาด้วย) → anchor ยัง 31", async () => {
+    const u = await makeUser();
+    const c = await makeCatalog();
+    // หาเดือนถัดไปที่มี 30 วัน แล้วตั้งรอบบิลเป็นวันที่ 30 ของเดือนนั้นโดย anchor = 31
+    const today = daysFromToday(0);
+    let [y, m] = today.split("-").map(Number);
+    let date = "";
+    for (let i = 1; i <= 12 && !date; i++) {
+      m += 1;
+      if (m > 12) [y, m] = [y + 1, 1];
+      if (new Date(Date.UTC(y, m, 0)).getUTCDate() === 30) date = `${y}-${String(m).padStart(2, "0")}-30`;
+    }
+    const id = await makeSub(u.id, { categoryId: c.categoryId, nextBillingDate: date, billingAnchorDay: 31 });
+    const r = await call(patch, `/api/subscriptions/${id}`, {
+      method: "PATCH",
+      as: u,
+      body: { note: "แก้หมายเหตุ", nextBillingDate: date, price: 100 },
+      ...params(id),
+    });
+    expect(r.status).toBe(200);
+    expect(r.json.data).toMatchObject({ note: "แก้หมายเหตุ", nextBillingDate: date, billingAnchorDay: 31 });
+
+    // ผู้ใช้เปลี่ยนวันจริง → anchor ตามวันใหม่
+    const moved = await call(patch, `/api/subscriptions/${id}`, {
+      method: "PATCH",
+      as: u,
+      body: { nextBillingDate: daysFromToday(15) },
+      ...params(id),
+    });
+    expect(moved.json.data.billingAnchorDay).toBe(anchorDayOf(daysFromToday(15)));
+  });
+});

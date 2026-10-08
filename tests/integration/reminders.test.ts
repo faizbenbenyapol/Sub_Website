@@ -176,3 +176,17 @@ describe("ผู้ใช้ถูกลบ → แจ้งเตือนห�
     expect(await db.select().from(notifications)).toHaveLength(0);
   });
 });
+
+describe("ลิงก์ในอีเมลเตือนเมื่อบริการถูกซ่อน", () => {
+  it("บริการถูก Admin ซ่อน → ลิงก์ไปหน้าแก้รายการแทนหน้าคลัง (ที่เป็น 404)", async () => {
+    const { services } = await import("@/db/schema");
+    const u = await makeUser();
+    const c = await makeCatalog();
+    const id = await makeSub(u.id, { planId: c.monthlyPlanId, nextBillingDate: "2026-10-09" });
+    await db.update(services).set({ isActive: false }).where(eq(services.id, c.serviceId));
+    await runReminders(TODAY);
+    const html = sendMail.mock.calls[0][0].html as string;
+    expect(html).toContain(`/subscriptions/${id}/edit`);
+    expect(html).not.toContain("#cancel");
+  });
+});

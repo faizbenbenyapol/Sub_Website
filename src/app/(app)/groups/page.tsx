@@ -61,6 +61,7 @@ export default async function GroupsPage() {
                     <span className="block truncate font-display text-lead font-semibold">{g.name}</span>
                     <span className="text-caption text-text-muted">
                       {formatBaht(g.total)}/เดือน · สมาชิก {g.memberCount} คน
+                      {g.cancelled && <span className="text-due"> · รายการยกเลิกแล้ว</span>}
                     </span>
                   </span>
                   <span className="text-right">
