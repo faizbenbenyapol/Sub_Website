@@ -3,7 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChargeStub } from "@/components/charge-stub";
 import { ServiceLogo } from "@/components/service-logo";
-import { daysInMonth, formatThaiDate, parseIsoDate, toIsoDate, todayInBangkok } from "@/lib/dates";
+import {
+  daysInMonth,
+  formatThaiDate,
+  formatThaiMonth,
+  parseIsoDate,
+  toIsoDate,
+  todayInBangkok,
+} from "@/lib/dates";
 import { formatBaht } from "@/lib/money";
 import { sumBilling, type UpcomingItem } from "@/lib/schedule";
 import { getCurrentUser } from "@/server/auth";
@@ -12,11 +19,6 @@ import { getCalendar } from "@/server/services/dashboard";
 export const metadata: Metadata = { title: "ปฏิทินวันตัดเงิน" };
 
 const WEEKDAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
-const MONTH_FMT = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 /** เลื่อนเดือน "YYYY-MM" ไป ±n เดือน */
 function shiftMonth(month: string, n: number) {
@@ -50,7 +52,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   ];
   const selected = typeof sp.day === "string" && byDate.has(sp.day) ? sp.day : undefined;
   const monthTotal = sumBilling(days.flatMap((d) => d.items));
-  const monthLabel = MONTH_FMT.format(new Date(Date.UTC(y, m - 1, 1)));
+  const monthLabel = formatThaiMonth(month);
   const href = (mo: string, day?: string) => `/calendar?month=${mo}${day ? `&day=${day}` : ""}`;
 
   return (

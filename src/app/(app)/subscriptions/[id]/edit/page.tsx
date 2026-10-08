@@ -39,14 +39,31 @@ export default async function EditSubscriptionPage({ params }: PageProps<"/subsc
         ← รายการของฉัน
       </Link>
       <h1 className="mt-2 truncate text-h2 font-bold">แก้ {item.name}</h1>
-      {item.service && (
-        <Link
-          href={`/services/${item.service.slug}#cancel`}
-          className="mt-1 inline-block text-link underline underline-offset-4"
-        >
-          ดูวิธียกเลิก {item.name}
-        </Link>
-      )}
+      <p className="mt-1 flex flex-wrap gap-x-5 gap-y-1">
+        {item.service && (
+          <Link
+            href={`/services/${item.service.slug}#cancel`}
+            className="text-link underline underline-offset-4"
+          >
+            ดูวิธียกเลิก {item.name}
+          </Link>
+        )}
+        {item.groupId !== null ? (
+          <Link href={`/groups/${item.groupId}`} className="text-link underline underline-offset-4">
+            ดูกลุ่มหารค่า {item.name}
+          </Link>
+        ) : (
+          item.status === "active" &&
+          item.billingCycle === "monthly" && (
+            <Link
+              href={`/groups/new?subscription=${item.id}`}
+              className="text-link underline underline-offset-4"
+            >
+              หารค่า {item.name} กับเพื่อน
+            </Link>
+          )
+        )}
+      </p>
       <div className="glass mt-6 rounded-card p-5 md:p-6">
         <SubscriptionForm services={services} categories={categories} today={today} initial={item} />
       </div>

@@ -24,7 +24,15 @@ export default async function SubscriptionsPage({ searchParams }: PageProps<"/su
 
   return (
     <main>
-      <h1 className="text-h2 font-bold">รายการของฉัน</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-h2 font-bold">รายการของฉัน</h1>
+        <Link
+          href="/groups"
+          className="min-h-11 content-center font-medium text-link underline underline-offset-4"
+        >
+          หารค่าบริการกับเพื่อน
+        </Link>
+      </div>
 
       <nav aria-label="สถานะรายการ" className="mt-5">
         <ul className="flex gap-2">

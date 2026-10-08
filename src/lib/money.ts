@@ -24,9 +24,9 @@ export function decimalToNumber(value: string): number {
 }
 
 const bahtFormat = new Intl.NumberFormat("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const bahtShortFormat = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 2 });
 
-/** แสดงเงินแบบ "฿1,247.00" (ตาราง/สลิป) หรือ "฿1,247" เมื่อ short และเป็นจำนวนเต็ม (ในประโยค) */
+/** แสดงเงินแบบ "฿1,247.00" (ตาราง/สลิป) — short ตัด ".00" ทิ้งเมื่อเป็นจำนวนเต็ม (ในประโยค: "฿419" แต่ "฿66.50" ยังเต็ม) */
 export function formatBaht(baht: number, opts: { short?: boolean } = {}): string {
-  return `฿${(opts.short ? bahtShortFormat : bahtFormat).format(baht)}`;
+  const s = bahtFormat.format(baht);
+  return `฿${opts.short && Number.isInteger(baht) ? s.slice(0, -3) : s}`;
 }

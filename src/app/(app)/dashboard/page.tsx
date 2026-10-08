@@ -8,6 +8,7 @@ import { formatBaht } from "@/lib/money";
 import { sumBilling } from "@/lib/schedule";
 import { getCurrentUser } from "@/server/auth";
 import { getDashboard, UPCOMING_DAYS } from "@/server/services/dashboard";
+import { getSavings } from "@/server/services/savings";
 
 export const metadata: Metadata = { title: "ภาพรวม" };
 
@@ -26,7 +27,10 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const today = todayInBangkok();
-  const { totals, byCategory, upcoming } = await getDashboard(user.id, today);
+  const [{ totals, byCategory, upcoming }, savings] = await Promise.all([
+    getDashboard(user.id, today),
+    getSavings(user.id),
+  ]);
 
   if (totals.activeCount === 0) return <EmptyDashboard name={user.name} />;
   const upcomingTotal = sumBilling(upcoming);
@@ -65,6 +69,42 @@ export default async function DashboardPage() {
               />
             </div>
           </section>
+
+          {savings.length > 0 && (
+            <section aria-labelledby="savings-heading">
+              <h2 id="savings-heading" className="text-h3 font-bold">
+                ประหยัดได้
+              </h2>
+              <p className="mt-1 text-caption text-text-muted">คิดจากแพ็กเกจในคลังของบริการเดียวกัน</p>
+              <ul className="mt-4 flex flex-col gap-3">
+                {savings.slice(0, 3).map((s) => (
+                  <li
+                    key={`${s.subscriptionId}-${s.kind}`}
+                    className="glass rounded-control border-l-[3px] border-l-due p-4"
+                  >
+                    <p>{s.message}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-4 text-caption text-text-muted">
+                      <span>
+                        ประหยัด{" "}
+                        <span className="figure text-text">{formatBaht(s.saveYearly, { short: true })}</span>
+                        /ปี
+                      </span>
+                      <Link
+                        href={
+                          s.onSuggestedPlan
+                            ? `/groups/new?subscription=${s.subscriptionId}`
+                            : `/subscriptions/${s.subscriptionId}/edit`
+                        }
+                        className="min-h-11 content-center font-medium text-link underline underline-offset-4"
+                      >
+                        {s.onSuggestedPlan ? "สร้างกลุ่มหาร" : "เปลี่ยนแพ็กเกจ"}
+                      </Link>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         <section aria-labelledby="upcoming-heading">

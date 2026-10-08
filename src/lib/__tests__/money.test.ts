@@ -23,3 +23,10 @@ describe("money", () => {
     expect(() => toSatang("abc")).toThrow();
   });
 });
+
+describe("formatBaht แบบ short", () => {
+  it("ตัด .00 เฉพาะจำนวนเต็ม", () => {
+    expect(formatBaht(419, { short: true })).toBe("฿419");
+    expect(formatBaht(66.5, { short: true })).toBe("฿66.50");
+  });
+});

@@ -398,7 +398,7 @@ type UpcomingItem = { subscriptionId: number; name: string; logoUrl: string | nu
 |---|---|---|
 | 👤 | `GET /api/savings` | `{ data: { subscriptionId, kind: "switch_yearly" \| "family_split", planId, members?: number, saveMonthly: number, saveYearly: number, message: string }[] }` |
 
-`switch_yearly`: บริการเดียวกันมีแพ็กเกจรายปีที่ (ราคารายปี / 12) < ราคารายเดือนที่จ่ายอยู่ · `family_split`: มีแพ็กเกจ `maxMembers > 1` → ส่วนต่อคน = ราคา / maxMembers เทียบกับที่จ่ายอยู่ · ไม่เสนอถ้าประหยัด < ฿1/เดือน
+แต่ละข้อมี `onSuggestedPlan` (ใช้แพ็กเกจที่เสนออยู่แล้วหรือไม่ — UI ใช้เลือกว่าจะพาไป "สร้างกลุ่มหาร" หรือ "เปลี่ยนแพ็กเกจ") · `switch_yearly`: บริการเดียวกันมีแพ็กเกจรายปีที่ (ราคารายปี / 12) < ราคารายเดือนที่จ่ายอยู่ · `family_split`: มีแพ็กเกจ `maxMembers > 1` → ส่วนต่อคน = ราคา / maxMembers เทียบกับที่จ่ายอยู่ · ไม่เสนอถ้าประหยัด < ฿1/เดือน
 
 ### 5.9 หารค่าบริการ *(P1)*
 
@@ -426,6 +426,8 @@ type GroupDetail = GroupSummary & {
              status: "paid" | "unpaid"; paidAt: string | null }[];
 };
 ```
+
+**ข้อจำกัดที่ตัดสินใจตอนทำ (วันที่ 7):** หารได้เฉพาะรายการ**รายเดือน**ที่ใช้งานอยู่ (รอบเก็บเงินเป็นเดือนปฏิทินตามเวลาไทย จึงไม่เข้ากับรายการรายปี) · PromptPay ID รับเฉพาะเบอร์มือถือ 06/08/09 และเลขบัตรประชาชนที่ check digit ถูก · ตอบกลับ API มีแต่เลขที่ mask แล้ว · `PUT payments` เป็น upsert บน unique (member, period) · เตือนสมาชิกได้วันละครั้ง (เก็บใน `member_payments.reminded_at`)
 
 **หน้า `/pay/[token]` (🌐)** — Server Component ไม่มี API แยก: หา member จาก token (ไม่พบ → 404 ธรรมดา) แสดงชื่อเจ้าของกลุ่ม, บริการ, ยอดของสมาชิกคนนั้น, เดือน, QR (SVG สร้างฝั่ง server จาก `promptpay-qr` + `qrcode`), PromptPay ID แบบ mask และสถานะจ่ายแล้ว/ยัง · หน้านี้ใส่ `<meta name="robots" content="noindex">`
 

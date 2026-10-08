@@ -87,3 +87,13 @@ export function relativeDayLabel(today: string, date: string): string {
   if (days > 1) return `อีก ${days} วัน`;
   return `เลยมา ${-days} วัน`;
 }
+
+/** เดือนแบบไทยเต็ม: "2026-10" → "ตุลาคม 2569" */
+export function formatThaiMonth(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, 1)));
+}

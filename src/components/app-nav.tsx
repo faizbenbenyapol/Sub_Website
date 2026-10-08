@@ -6,11 +6,12 @@ import { LogoutButton } from "./logout-button";
 
 // เมนูฝั่งผู้ใช้ (docs/03 ข้อ 6)
 // มือถือ: แถบล่าง ภาพรวม · รายการ · [+] · ปฏิทิน · ตั้งค่า — ปุ่มเพิ่มรายการกลางแถบในระยะนิ้วโป้ง
-// desktop: แถบบน มีคลังบริการเพิ่ม เพราะที่ว่างพอ
+// desktop: แถบบน มีหารค่าบริการ + คลังบริการเพิ่ม เพราะที่ว่างพอ (มือถือเข้ากลุ่มหารจากหน้ารายการ)
 
 const DESKTOP_ITEMS = [
   { href: "/dashboard", label: "ภาพรวม" },
   { href: "/subscriptions", label: "รายการ" },
+  { href: "/groups", label: "หารค่าบริการ" },
   { href: "/calendar", label: "ปฏิทิน" },
   { href: "/services", label: "คลังบริการ" },
   { href: "/settings", label: "ตั้งค่า" },
