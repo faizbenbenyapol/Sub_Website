@@ -215,6 +215,8 @@
 
 ## 6. Manual checklist ก่อน demo (12–13 ต.ค.)
 
+เริ่มด้วย `npm run preflight` (บน server: `docker compose -f docker-compose.prod.yml exec app npx tsx scripts/preflight.ts`) — ต้องไม่มีข้อ ✗ แล้วค่อยไล่ข้อที่ต้องทำด้วยมือ:
+
 - [ ] อีเมลแจ้งเตือนจริงเข้า Gmail (ไม่ตก Spam) ทั้ง billing, trial, test · เปิดบนแอป Gmail มือถือแล้วอ่านออก
 - [ ] QR พร้อมเพย์: สแกนด้วยแอปธนาคารอย่างน้อย 2 แอป (เช่น K PLUS, SCB EASY) ด้วยเบอร์และยอดจริง → ชื่อและยอดถูก **(ทำเช้าวันที่ 7 ก่อนทำ UI กลุ่ม)**
 - [ ] เปิดเว็บบนมือถือจริง 1 เครื่อง ผ่าน LAN (`next start -H 0.0.0.0`) ไล่ S1

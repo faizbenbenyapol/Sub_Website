@@ -19,6 +19,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:int",
+    "preflight": "tsx scripts/preflight.ts",
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "db:reset": "tsx --env-file=.env scripts/reset.ts && npm run db:seed",
     "db:export": "tsx scripts/export-sql.ts",

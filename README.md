@@ -57,6 +57,7 @@ npm run dev                   # http://localhost:3000
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run dev`         | รันเว็บโหมดพัฒนา                                                                                                                                                            |
 | `npm run check`       | lint + typecheck + unit test + integration test (รันก่อนส่งงานทุกครั้ง ต้อง `db:up` ก่อน)                                                                                   |
+| `npm run preflight`   | เช็กความพร้อมก่อน demo / หลัง deploy: `.env`, DB + migration + ข้อมูลเริ่มต้น, ล็อกอิน Gmail จริง (ไม่ส่งเมล), `APP_URL` ตอบไหม, Google — บอกวิธีแก้ทุกข้อ                  |
 | `npm test`            | unit test (ไม่ต้องใช้ DB)                                                                                                                                                   |
 | `npm run test:int`    | integration test กับ DB `tadyang_test` (สร้างและล้างให้เอง)                                                                                                                 |
 | `npm run test:e2e`    | E2E ด้วย Playwright: build + start ที่พอร์ต 3200 กับ DB `tadyang_e2e` (ใช้ Edge ของ Windows — เครื่องอื่นตั้ง `PW_CHANNEL=chromium` หลัง `npx playwright install chromium`) |

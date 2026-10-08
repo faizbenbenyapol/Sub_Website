@@ -42,6 +42,14 @@ docker compose -f docker-compose.prod.yml logs -f app   # รอเห็น "mi
 docker compose -f docker-compose.prod.yml exec app npx tsx scripts/seed.ts
 ```
 
+เช็กทุกอย่างในคำสั่งเดียว (ต่อ DB, migration, ข้อมูลเริ่มต้น, ล็อกอิน Gmail จริงโดยไม่ส่งเมล, ค่า Google + redirect URI ที่ต้องลงทะเบียน):
+
+```bash
+docker compose -f docker-compose.prod.yml exec app npx tsx scripts/preflight.ts
+```
+
+> ข้อ "เปิด APP_URL ไม่ได้" ที่รันจากใน container อาจขึ้นเตือนบน server ที่เรียกโดเมนตัวเองไม่ได้ — ให้ลองเปิดจากเบราว์เซอร์แทน
+
 เปิด `https://โดเมน/api/health` ต้องได้ `{"data":{"status":"ok","db":"ok"}}` · ครั้งแรก Caddy ใช้เวลาขอใบรับรองไม่กี่วินาที
 
 ## 3. ค่าใน `.env` บน server

@@ -1,41 +1,15 @@
 import "server-only";
-import { z } from "zod";
+import { parseEnv } from "./env-schema";
 
-// ตรวจ environment variables ครั้งเดียวตอนโหลด ถ้าขาดตัวไหนให้พังทันทีพร้อมบอกชื่อ
-const schema = z.object({
-  DATABASE_URL: z.string().startsWith("mysql://"),
-  SESSION_SECRET: z.string().min(32, "SESSION_SECRET ต้องยาวอย่างน้อย 32 ตัวอักษร"),
-  APP_URL: z.url(),
-  MAIL_TRANSPORT: z.enum(["smtp", "console"]).default("console"),
-  SMTP_HOST: z.string().default("smtp.gmail.com"),
-  SMTP_PORT: z.coerce.number().int().default(465),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  MAIL_FROM: z.string().optional(),
-  CRON_ENABLED: z.stringbool().default(false),
-  CRON_SECRET: z.string().min(16, "CRON_SECRET ต้องยาวอย่างน้อย 16 ตัวอักษร"),
-  // เข้าสู่ระบบด้วย Google (ไม่บังคับ) — ค่าว่างถือว่าไม่ได้ตั้ง ปุ่มจะไม่แสดง
-  GOOGLE_CLIENT_ID: z
-    .string()
-    .optional()
-    .transform((v) => v || undefined),
-  GOOGLE_CLIENT_SECRET: z
-    .string()
-    .optional()
-    .transform((v) => v || undefined),
-});
+// ตรวจ environment variables ครั้งเดียวตอนโหลด ถ้าขาดตัวไหนให้พังทันทีพร้อมบอกชื่อ (schema อยู่ใน env-schema.ts)
 
 /** อ่านและตรวจค่า env — โยน error ที่บอกชื่อตัวแปรที่ผิดถ้าตั้งค่าไม่ครบ */
 function loadEnv() {
-  const parsed = schema.safeParse(process.env);
-  if (!parsed.success) {
-    const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`).join("\n");
-    throw new Error(`ตั้งค่า .env ไม่ครบ (ดู .env.example):\n${issues}`);
+  const { env, issues } = parseEnv(process.env);
+  if (!env) {
+    throw new Error(`ตั้งค่า .env ไม่ครบ (ดู .env.example):\n${issues.map((i) => `  - ${i}`).join("\n")}`);
   }
-  if (parsed.data.MAIL_TRANSPORT === "smtp" && (!parsed.data.SMTP_USER || !parsed.data.SMTP_PASS)) {
-    throw new Error("MAIL_TRANSPORT=smtp ต้องตั้ง SMTP_USER และ SMTP_PASS");
-  }
-  return parsed.data;
+  return env;
 }
 
 export const env = loadEnv();
