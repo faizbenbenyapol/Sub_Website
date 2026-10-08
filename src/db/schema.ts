@@ -42,7 +42,8 @@ export const users = mysqlTable("users", {
   id: id(),
   name: varchar({ length: 100 }).notNull(),
   email: varchar({ length: 191 }).notNull().unique(), // เก็บเป็นตัวพิมพ์เล็กเสมอ
-  passwordHash: varchar({ length: 255 }).notNull(),
+  passwordHash: varchar({ length: 255 }), // null = บัญชีที่เข้าด้วย Google อย่างเดียว
+  googleSub: varchar({ length: 64 }).unique(), // id ผู้ใช้ของ Google (claim "sub") — ไม่ใช้อีเมลเพราะเปลี่ยนได้
   role: mysqlEnum(["user", "admin"]).notNull().default("user"),
   status: mysqlEnum(["active", "suspended"]).notNull().default("active"),
   notifyEnabled: boolean().notNull().default(true),

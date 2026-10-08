@@ -41,6 +41,8 @@ export default defineConfig({
             MAIL_TRANSPORT: "console",
             CRON_ENABLED: "false",
             CRON_SECRET: "integration-test-cron-secret",
+            GOOGLE_CLIENT_ID: "test-client-id.apps.googleusercontent.com",
+            GOOGLE_CLIENT_SECRET: "test-google-secret",
             TZ: "UTC",
           },
         },

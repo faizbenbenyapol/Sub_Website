@@ -14,6 +14,15 @@ const schema = z.object({
   MAIL_FROM: z.string().optional(),
   CRON_ENABLED: z.stringbool().default(false),
   CRON_SECRET: z.string().min(16, "CRON_SECRET ต้องยาวอย่างน้อย 16 ตัวอักษร"),
+  // เข้าสู่ระบบด้วย Google (ไม่บังคับ) — ค่าว่างถือว่าไม่ได้ตั้ง ปุ่มจะไม่แสดง
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .optional()
+    .transform((v) => v || undefined),
+  GOOGLE_CLIENT_SECRET: z
+    .string()
+    .optional()
+    .transform((v) => v || undefined),
 });
 
 /** อ่านและตรวจค่า env — โยน error ที่บอกชื่อตัวแปรที่ผิดถ้าตั้งค่าไม่ครบ */
@@ -30,3 +39,6 @@ function loadEnv() {
 }
 
 export const env = loadEnv();
+
+/** ตั้งค่า Google OAuth ครบทั้งคู่หรือยัง */
+export const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);

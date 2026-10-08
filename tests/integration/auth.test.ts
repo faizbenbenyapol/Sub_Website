@@ -171,6 +171,8 @@ const PUBLIC_ROUTES = new Set([
   "auth/register",
   "auth/login",
   "auth/logout",
+  "auth/google",
+  "auth/google/callback",
   "categories",
   "services",
   "services/[slug]",

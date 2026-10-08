@@ -431,6 +431,8 @@ type GroupDetail = GroupSummary & {
 
 **เพิ่มหลังรีวิว (วันที่ 8):** แก้ราคารายการที่หารอยู่ → กลุ่มหารเท่ากันคำนวณยอดใหม่ในทรานแซกชันเดียวกัน, โหมดกำหนดเองที่ยอดสมาชิกรวมเกินราคาใหม่ → 400, เปลี่ยนเป็นรายปี → 400 · รายการถูกยกเลิก (หรือเจ้าของถูกระงับ) → หน้าจ่ายขึ้น "ไม่ต้องจ่ายแล้ว" ไม่มี QR และเตือนไม่ได้ (`GroupSummary.cancelled`) · สมาชิกยอด ฿0 ไม่แสดง QR · เตือนสมาชิกจำกัด 20 ฉบับ/วัน/เจ้าของ และ 1 ฉบับ/วัน/อีเมลผู้รับ (ลบแล้วเพิ่มใหม่ก็ไม่หลุด) · เพิ่ม/ลบสมาชิกล็อกแถวกลุ่ม (`SELECT … FOR UPDATE`) กันเกิน 10 คน
 
+**เข้าสู่ระบบด้วย Google (เพิ่มวันที่ 8, ไม่บังคับ):** `GET /api/auth/google` (🌐) → Google (OAuth code + PKCE S256, state ใน cookie httpOnly 10 นาที) → `GET /api/auth/google/callback` (🌐) ตรวจ state, แลก code, ตรวจ `id_token` กับ JWKS ของ Google, รับเฉพาะ `email_verified` → หา/ผูก/สร้างบัญชีด้วย `users.google_sub` · ผูกกับบัญชีรหัสผ่านเดิม = ยกเลิกรหัสผ่าน + `session_version + 1` (กัน pre-hijacking) · รายละเอียดและการตั้งค่าใน docs/05-deploy.md
+
 **Session (เพิ่มวันที่ 8):** JWT มี claim `sv` = `users.session_version` ตอนออก token · `getCurrentUser` เทียบกับ DB ทุกครั้ง · logout เพิ่ม `session_version` → token เก่าทุกใบ (ทุกเครื่อง) ใช้ไม่ได้ทันที · token ที่ไม่มี `sv` ถือเป็น 0 · คำค้น LIKE escape `% _ \` (`src/lib/like.ts`)
 
 **หน้า `/pay/[token]` (🌐)** — Server Component ไม่มี API แยก: หา member จาก token (ไม่พบ → 404 ธรรมดา) แสดงชื่อเจ้าของกลุ่ม, บริการ, ยอดของสมาชิกคนนั้น, เดือน, QR (SVG สร้างฝั่ง server จาก `promptpay-qr` + `qrcode`), PromptPay ID แบบ mask และสถานะจ่ายแล้ว/ยัง · หน้านี้ใส่ `<meta name="robots" content="noindex">`

@@ -22,6 +22,8 @@ export type CallOptions = {
   as?: Pick<User, "id" | "role"> & { sessionVersion?: number };
   /** token ดิบ (เช่น token ปลอม) แทน as */
   token?: string;
+  /** cookie อื่นนอกจาก session เช่น g_oauth */
+  cookies?: Record<string, string>;
   params?: Record<string, string>;
   /** null = ไม่ส่ง Origin, string = ส่ง origin นั้น (ค่าเริ่มต้นส่ง origin ของแอปเมื่อไม่ใช่ GET) */
   origin?: string | null;
@@ -51,6 +53,7 @@ export async function call(handler: unknown, path: string, opts: CallOptions = {
     );
   }
   if (opts.token !== undefined) jar.set(SESSION_COOKIE, opts.token);
+  for (const [k, v] of Object.entries(opts.cookies ?? {})) jar.set(k, v);
   (globalThis as { __testCookies?: Map<string, string> }).__testCookies = jar;
 
   const req = new Request(`${ORIGIN}${path}`, {

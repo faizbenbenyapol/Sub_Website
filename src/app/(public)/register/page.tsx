@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { redirectIfSignedIn } from "@/server/auth";
+import { googleEnabled } from "@/server/env";
 
 export const metadata: Metadata = { title: "สมัครสมาชิก" };
 
@@ -13,7 +14,7 @@ export default async function RegisterPage() {
       title="สมัครสมาชิก"
       lead="จดทุกรายการที่ตัดเงินรายเดือนไว้ที่เดียว แล้วรับอีเมลเตือนก่อนโดนตัด"
     >
-      <AuthForm mode="register" />
+      <AuthForm mode="register" googleEnabled={googleEnabled} />
     </AuthShell>
   );
 }
