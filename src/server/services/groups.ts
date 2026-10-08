@@ -195,6 +195,50 @@ async function rebalance(groupId: number, totalSatang: number) {
   await db.update(groupMembers).set({ amount: share }).where(eq(groupMembers.groupId, groupId));
 }
 
+/**
+ * ก่อนแก้ราคา/รอบบิลของรายการ: ถ้ามีกลุ่มหาร ตรวจว่ายังหารได้ แล้วคืนฟังก์ชันที่ต้องเรียกหลังบันทึก
+ * (หารเท่ากัน → คำนวณยอดใหม่ทุกคน) — ไม่มีกลุ่มหรือไม่ได้แก้ราคาคืน null
+ */
+export async function prepareGroupForSubscriptionChange(
+  subscriptionId: number,
+  change: { priceSatang?: number; billingCycle?: "monthly" | "yearly" },
+): Promise<(() => Promise<void>) | null> {
+  const [group] = await db
+    .select({ id: shareGroups.id, splitMode: shareGroups.splitMode })
+    .from(shareGroups)
+    .where(eq(shareGroups.userSubscriptionId, subscriptionId))
+    .limit(1);
+  if (!group) return null;
+  if (change.billingCycle === "yearly") {
+    throw new ApiError(400, "VALIDATION_ERROR", "รายการนี้มีกลุ่มหารอยู่ ลบกลุ่มก่อนเปลี่ยนเป็นรายปี", {
+      billingCycle: "รายการที่หารอยู่ต้องเป็นรายเดือน",
+    });
+  }
+  const price = change.priceSatang;
+  if (price === undefined) return null;
+  if (group.splitMode === "equal") return () => rebalance(group.id, price);
+  const members = await db
+    .select({ amount: groupMembers.amount })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, group.id));
+  if (
+    validateCustomSplit(
+      price,
+      members.map((m) => toSatang(m.amount)),
+    )
+  ) {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      "ยอดที่สมาชิกกลุ่มหารจ่ายรวมกันเกินราคาใหม่ แก้ยอดในกลุ่มก่อน",
+      {
+        price: "ยอดของสมาชิกกลุ่มหารรวมกันเกินราคานี้",
+      },
+    );
+  }
+  return null;
+}
+
 /** สร้างกลุ่มหาร (US-F1) — 1 รายการมีได้ 1 กลุ่ม, หารได้เฉพาะรายการรายเดือนที่ใช้งานอยู่ */
 export async function createGroup(ownerId: number, input: GroupCreate): Promise<GroupDetailDto> {
   const [row] = await db

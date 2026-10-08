@@ -21,10 +21,10 @@
 
 ## 2. สภาพแวดล้อมการเทส
 
-- **DB เทส:** database `tadyang_test` ใน container เดียวกับ dev (`docker compose`) · ตั้ง `DATABASE_URL` ของเทสใน `.env.test` · `vitest` globalSetup: รัน migration หนึ่งครั้ง → แต่ละไฟล์ integration ล้างตาราง (`TRUNCATE` ตามลำดับ FK) แล้วสร้างข้อมูลด้วย factory ของตัวเอง ไม่พึ่ง seed
+- **DB เทส:** database `tadyang_test` ใน container เดียวกับ dev (`docker compose`) · env ของเทส (DB, secret ปลอม, `MAIL_TRANSPORT=console`) ตั้งใน `vitest.config.mts` project `integration` · globalSetup (`tests/integration/global-setup.ts`) ใช้ root สร้าง DB + drop ตาราง + migrate หนึ่งครั้ง → `setup.ts` ล้างทุกตาราง (`DELETE` ปิด FK check) **ก่อนทุกเทส** แล้วสร้างข้อมูลด้วย factory ใน `helpers.ts` ไม่พึ่ง seed · รัน `npm run test:int` (ต้อง `npm run db:up` ก่อน) และรวมอยู่ใน `npm run check`
 - Integration รันแบบไม่ขนาน (`fileParallelism: false` เฉพาะ project integration) เพราะใช้ DB ร่วมกัน
-- **เรียก route handler ตรง:** `import { POST } from "@/app/api/subscriptions/route"` แล้วส่ง `new Request(url, { method, headers: { cookie, origin, "content-type" }, body })` · helper `asUser(user)` สร้าง cookie session ที่เซ็นจริงด้วย `SESSION_SECRET` ของเทส
-- `server-only` โยน error นอก React Server → alias เป็นไฟล์ว่างใน `vitest.config.ts`
+- **เรียก route handler ตรง:** `call(POST, "/api/subscriptions", { method, body, as: user, params })` ใน `tests/integration/helpers.ts` สร้าง `Request` พร้อม `Origin`/`Host` และ cookie session ที่เซ็นจริงด้วย `SESSION_SECRET` ของเทส · `next/headers` ถูก mock ให้ `cookies()` อ่าน cookie นั้น (นอก Next ไม่มี request scope)
+- `server-only` โยน error นอก React Server → alias เป็นไฟล์ว่างใน `vitest.config.mts`
 - **เวลา:** ทุกฟังก์ชันที่ตัดสินว่า "วันนี้" รับ `today` เป็นพารามิเตอร์ (docs/02 §6) · เทสที่ผ่าน route ใช้ `vi.setSystemTime()` · **ทุกเคสวันที่ต้องรันผ่านทั้งตอนเครื่องตั้ง TZ เป็น UTC และ Asia/Bangkok** (รันชุด unit ซ้ำด้วย `TZ=UTC`)
 - **อีเมล:** `MAIL_TRANSPORT=console` ในเทสทั้งหมด · integration ตรวจผลจากตาราง `notifications` + spy ที่ตัวส่งเมล
 - **E2E:** Playwright ยิง `next build && next start` (ไม่ใช่ dev) ด้วย `CRON_ENABLED=false`, DB `tadyang_test` ที่ seed ด้วย `scripts/seed.ts`

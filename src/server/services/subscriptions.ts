@@ -10,6 +10,7 @@ import { decimalToNumber, fromSatang, satangToDecimal, toSatang } from "@/lib/mo
 import type { SubscriptionCreate, SubscriptionUpdate } from "@/lib/validation/subscription";
 import { ApiError } from "../http";
 import { toCategoryDto, type CategoryDto } from "./catalog";
+import { prepareGroupForSubscriptionChange } from "./groups";
 
 // รายการ subscription ของผู้ใช้ (US-C1, C2) — ทุกฟังก์ชันรับ userId และกรองด้วย user_id ใน SQL เสมอ (US-A3)
 
@@ -219,6 +220,10 @@ export async function updateSubscription(
   }
 
   const { status, price, nextBillingDate, ...rest } = input;
+  const syncGroup = await prepareGroupForSubscriptionChange(id, {
+    priceSatang: price === undefined ? undefined : toSatang(price),
+    billingCycle: input.billingCycle,
+  });
   try {
     await db
       .update(userSubscriptions)
@@ -234,6 +239,7 @@ export async function updateSubscription(
     if (isMissingReference(err)) throw missingCategory();
     throw err;
   }
+  await syncGroup?.();
   return getSubscription(userId, id);
 }
 
