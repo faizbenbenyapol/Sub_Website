@@ -341,3 +341,40 @@ describe("กฎ 3.3.2 anchor day ไม่ไหลเมื่อแก้ร�
     expect(moved.json.data.billingAnchorDay).toBe(anchorDayOf(daysFromToday(15)));
   });
 });
+
+describe("ดาวน์โหลด CSV (P2)", () => {
+  it("ได้เฉพาะรายการของตัวเอง ทั้งใช้งานอยู่และยกเลิกแล้ว · มี BOM · กันสูตร Excel · ไม่ cache", async () => {
+    const { GET: exportCsv } = await import("@/app/api/subscriptions/export/route");
+    const u = await makeUser();
+    const other = await makeUser();
+    const c = await makeCatalog({ serviceName: "Netflix" });
+    await makeSub(u.id, { planId: c.monthlyPlanId, price: "419.00", note: '=HYPERLINK("http://evil")' });
+    await makeSub(u.id, { categoryId: c.categoryId, customName: "ฟิตเนส, สาขา 2", status: "cancelled" });
+    await makeSub(other.id, { categoryId: c.categoryId, customName: "ของคนอื่น" });
+
+    const r = await call(exportCsv, "/api/subscriptions/export", { as: u });
+    expect(r.status).toBe(200);
+    expect(r.res.headers.get("content-type")).toContain("text/csv");
+    expect(r.res.headers.get("content-disposition")).toMatch(
+      /attachment; filename="tadyang-subscriptions-\d{4}-\d{2}-\d{2}\.csv"/,
+    );
+    expect(r.res.headers.get("cache-control")).toBe("no-store");
+    // ดูไบต์ดิบ: Response.text() ตัด BOM ทิ้งตอนถอดรหัส แต่ไฟล์ที่ดาวน์โหลดต้องมี EF BB BF ให้ Excel อ่านไทยถูก
+    const bytes = new Uint8Array(await r.res.clone().arrayBuffer());
+    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const text = await r.res.text();
+    const lines = text.trim().split("\r\n");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatch(/^ชื่อบริการ,แพ็กเกจ,หมวด/);
+    expect(text).toContain("Netflix,รายเดือน");
+    expect(text).toContain('"ฟิตเนส, สาขา 2"');
+    expect(text).toContain("ยกเลิกแล้ว");
+    expect(text).toContain(`"'=HYPERLINK(""http://evil"")"`);
+    expect(text).not.toContain("ของคนอื่น");
+  });
+
+  it("ไม่ล็อกอิน → 401", async () => {
+    const { GET: exportCsv } = await import("@/app/api/subscriptions/export/route");
+    expect((await call(exportCsv, "/api/subscriptions/export")).status).toBe(401);
+  });
+});

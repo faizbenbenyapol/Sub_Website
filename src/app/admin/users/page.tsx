@@ -68,7 +68,16 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                     <span className="ml-2 text-caption text-text-muted">ผู้ดูแลระบบ</span>
                   )}
                 </td>
-                <td className="px-5 py-3 text-text-muted">{u.email}</td>
+                <td className="px-5 py-3 text-text-muted">
+                  {u.email}
+                  <span className="block text-caption text-text-faint">
+                    {u.loginMethods.length === 0
+                      ? "ยังไม่มีช่องทางเข้าสู่ระบบ"
+                      : u.loginMethods
+                          .map((m) => (m === "google" ? "Google" : "อีเมล + รหัสผ่าน"))
+                          .join(" · ")}
+                  </span>
+                </td>
                 <td className="px-5 py-3 text-caption text-text-muted">{formatThaiDateTime(u.createdAt)}</td>
                 <td className="px-5 py-3">
                   <span className="inline-flex items-center gap-2 text-caption">

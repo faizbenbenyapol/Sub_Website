@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, gte, like, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, like, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { db } from "@/db";
 import { categories, notifications, plans, services, userSubscriptions, users } from "@/db/schema";
@@ -20,6 +20,7 @@ export type AdminUserDto = {
   email: string;
   role: "user" | "admin";
   status: "active" | "suspended";
+  loginMethods: ("email" | "google")[]; // ไม่ส่ง hash หรือ id ของ Google ออกไป บอกแค่ว่าเข้าทางไหนได้
   createdAt: string;
 };
 
@@ -30,7 +31,23 @@ const accountColumns = {
   role: users.role,
   status: users.status,
   createdAt: users.createdAt,
+  // เลือกแค่ "มีหรือไม่มี" ใน SQL — hash และ id ของ Google ไม่ออกจากฐานข้อมูลเลย
+  hasPassword: sql<number>`${users.passwordHash} is not null`,
+  hasGoogle: sql<number>`${users.googleSub} is not null`,
 };
+
+type AccountRow = { hasPassword: number; hasGoogle: number; createdAt: Date } & Omit<
+  AdminUserDto,
+  "loginMethods" | "createdAt"
+>;
+
+/** แถวจาก DB → DTO (บอกแค่ช่องทางเข้าสู่ระบบ) */
+function toAdminUserDto({ hasPassword, hasGoogle, createdAt, ...r }: AccountRow): AdminUserDto {
+  const loginMethods: AdminUserDto["loginMethods"] = [];
+  if (Number(hasPassword)) loginMethods.push("email");
+  if (Number(hasGoogle)) loginMethods.push("google");
+  return { ...r, loginMethods, createdAt: createdAt.toISOString() };
+}
 
 /** รายชื่อผู้ใช้ ค้นจากชื่อ/อีเมล แบ่งหน้า (ใหม่ → เก่า) */
 export async function listUsers(opts: { q?: string; page?: number }) {
@@ -49,7 +66,7 @@ export async function listUsers(opts: { q?: string; page?: number }) {
       .offset((page - 1) * USERS_PAGE_SIZE),
     db.select({ total: count() }).from(users).where(where),
   ]);
-  const data: AdminUserDto[] = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+  const data = rows.map(toAdminUserDto);
   return { data, meta: { page, pageSize: USERS_PAGE_SIZE, total } };
 }
 
@@ -61,7 +78,7 @@ export async function setUserStatus(adminId: number, userId: number, status: "ac
   if (target.role === "admin")
     throw new ApiError(400, "VALIDATION_ERROR", "เปลี่ยนสถานะบัญชีผู้ดูแลระบบไม่ได้");
   await db.update(users).set({ status }).where(eq(users.id, userId));
-  return { ...target, status, createdAt: target.createdAt.toISOString() } satisfies AdminUserDto;
+  return toAdminUserDto({ ...target, status });
 }
 
 export type AdminDashboardDto = {

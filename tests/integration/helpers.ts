@@ -63,7 +63,8 @@ export async function call(handler: unknown, path: string, opts: CallOptions = {
   });
   const res = await (handler as Handler)(req, { params: Promise.resolve(opts.params ?? {}) });
   const text = await res.clone().text();
-  return { status: res.status, json: text ? JSON.parse(text) : null, res };
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  return { status: res.status, json: text && isJson ? JSON.parse(text) : null, res };
 }
 
 let seq = 0;

@@ -26,12 +26,22 @@ export default async function SubscriptionsPage({ searchParams }: PageProps<"/su
     <main>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="text-h2 font-bold">รายการของฉัน</h1>
-        <Link
-          href="/groups"
-          className="min-h-11 content-center font-medium text-link underline underline-offset-4"
-        >
-          หารค่าบริการกับเพื่อน
-        </Link>
+        <div className="flex flex-wrap gap-x-5">
+          <Link
+            href="/groups"
+            className="min-h-11 content-center font-medium text-link underline underline-offset-4"
+          >
+            หารค่าบริการกับเพื่อน
+          </Link>
+          {/* ลิงก์ธรรมดา: route ตอบเป็นไฟล์แนบ เบราว์เซอร์ดาวน์โหลดเอง (รวมแท็บยกเลิกแล้วด้วย) */}
+          <a
+            href="/api/subscriptions/export"
+            download
+            className="min-h-11 content-center font-medium text-link underline underline-offset-4"
+          >
+            ดาวน์โหลด CSV
+          </a>
+        </div>
       </div>
 
       <nav aria-label="สถานะรายการ" className="mt-5">

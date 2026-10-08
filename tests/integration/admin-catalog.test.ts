@@ -231,3 +231,24 @@ describe("ค้นหาด้วย % หรือ _ ไม่กลายเ�
     expect((await call(listServices, "/api/services?q=flix")).json.data).toHaveLength(1);
   });
 });
+
+describe("Admin เห็นช่องทางเข้าสู่ระบบของผู้ใช้ (ไม่เห็น hash / Google id)", () => {
+  it("รหัสผ่าน / Google / ทั้งสอง", async () => {
+    const admin = await makeAdmin();
+    await makeUser({ name: "รหัสผ่าน" });
+    await makeUser({ name: "Google ล้วน", passwordHash: null, googleSub: "sub-1" });
+    await makeUser({ name: "ทั้งคู่", googleSub: "sub-2" });
+    const r = await call(listUsers, "/api/admin/users", { as: admin });
+    const byName = Object.fromEntries(
+      r.json.data.map((u: { name: string; loginMethods: string[] }) => [u.name, u.loginMethods]),
+    );
+    expect(byName).toMatchObject({
+      รหัสผ่าน: ["email"],
+      "Google ล้วน": ["google"],
+      ทั้งคู่: ["email", "google"],
+    });
+    const text = JSON.stringify(r.json);
+    expect(text).not.toContain("sub-1");
+    expect(text).not.toMatch(/password/i);
+  });
+});

@@ -258,7 +258,7 @@ erDiagram
 **อื่น ๆ**
 - Login ผิด: 401 `INVALID_CREDENTIALS` ข้อความเดียวกันทั้งอีเมลผิดและรหัสผิด · ผิด 5 ครั้งใน 15 นาทีต่ออีเมล → 429 `RATE_LIMITED` (in-memory พอสำหรับ process เดียว)
 - CSRF: `sameSite=lax` + API ที่ไม่ใช่ GET ต้องมี `Content-Type: application/json` และ host ของ header `Origin` ต้องตรงกับ `Host` ของ request (ไม่เทียบกับ `APP_URL` เพื่อให้เปิดผ่าน IP ในวง LAN บนมือถือตอน demo ได้)
-- Admin เห็นเฉพาะข้อมูลบัญชี (US-H4) — `/api/admin/users` select แค่ `id, name, email, role, status, created_at` และ admin ระงับตัวเอง/admin คนอื่นไม่ได้
+- Admin เห็นเฉพาะข้อมูลบัญชี (US-H4) — `/api/admin/users` select แค่ `id, name, email, role, status, created_at` + `loginMethods` (`email`/`google` คำนวณใน SQL ว่ามี/ไม่มี — hash และ google_sub ไม่ออกจาก DB) และ admin ระงับตัวเอง/admin คนอื่นไม่ได้
 
 ---
 
@@ -344,6 +344,7 @@ type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "m
 |---|---|---|---|---|
 | 👤 | `GET /api/subscriptions` | query `status=active\|cancelled\|all` (default `active`) | `{ data: Subscription[] }` เรียง nextBillingDate | — |
 | 👤 | `POST /api/subscriptions` | ดูด้านล่าง | `201 { data: Subscription }` | 400, 404 plan |
+| 👤 | `GET /api/subscriptions/export` *(P2)* | — | `text/csv` UTF-8 + BOM แนบไฟล์ รวมทุกสถานะ · ข้อความขึ้นต้น `= + - @` ใส่ `'` นำหน้ากันสูตร Excel · `no-store` | 401 |
 | 👤 | `GET /api/subscriptions/:id` | — | `{ data: Subscription }` | 404 |
 | 👤 | `PATCH /api/subscriptions/:id` | ฟิลด์ใดก็ได้จากตอนสร้าง + `status: "active"\|"cancelled"` | `{ data: Subscription }` | 400, 404 |
 | 👤 | `DELETE /api/subscriptions/:id` | — | `204` (ลบกลุ่มหารที่ผูกไว้ด้วย — UI ต้องยืนยันก่อน) | 404 |
@@ -453,7 +454,7 @@ type GroupDetail = GroupSummary & {
 | `POST /api/admin/services/:id/plans` | `{ name, price, billingCycle, maxMembers?, isActive? }` | `201 { data: Plan }` | 400, 404 |
 | `PATCH /api/admin/plans/:id` | ฟิลด์ใดก็ได้ — ถ้า `price` เปลี่ยน เขียน `price_history` ในทรานแซกชันเดียวกัน | `{ data: Plan }` | 400, 404 |
 | `DELETE /api/admin/plans/:id` | — | `204` | 404, 409 `IN_USE` |
-| `GET /api/admin/users` | `q?`, `page?` | `{ data: { id, name, email, role, status, createdAt }[], meta }` | — |
+| `GET /api/admin/users` | `q?`, `page?` | `{ data: { id, name, email, role, status, loginMethods, createdAt }[], meta }` | — |
 | `PATCH /api/admin/users/:id` | `{ status: "active"\|"suspended" }` | `{ data: … }` | 400 ระงับตัวเอง/admin, 404 |
 | `GET /api/admin/dashboard` | — | ดูด้านล่าง | — |
 
