@@ -62,6 +62,7 @@ async function databaseChecks(env: Env): Promise<Check[]> {
     );
     if (n === 0) return out;
 
+    /** query แถวเดียว */
     const one = async (sql: string, params: unknown[] = []) =>
       Number((await conn.query<RowDataPacket[]>(sql, params))[0][0].n);
     const services = await one("select count(*) as n from services where is_active = 1");
@@ -166,6 +167,7 @@ function print(group: string, checks: Check[]) {
   }
 }
 
+/** รันทุกข้อตรวจตามลำดับ พิมพ์ผล ✓/✗ พร้อมวิธีแก้ แล้วออกด้วย code 1 ถ้ามีข้อที่ไม่ผ่าน */
 async function main() {
   try {
     process.loadEnvFile(".env");
@@ -185,6 +187,7 @@ async function main() {
     return;
   }
   const all: Check[] = [];
+  /** รันข้อตรวจของหมวดหนึ่งแล้วพิมพ์ผลทีละข้อ */
   const run = (group: string, checks: Check[]) => {
     print(group, checks);
     all.push(...checks);

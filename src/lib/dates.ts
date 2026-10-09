@@ -18,6 +18,31 @@ export function toIsoDate(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+/** ปี พ.ศ. = ค.ศ. + 543 */
+export const BUDDHIST_OFFSET = 543;
+
+/** "2026-10-09" → "09/10/2569" — รูปแบบ วว/ดด/ปปปป (พ.ศ.) ที่ผู้ใช้เห็นและพิมพ์ในช่องวันที่ */
+export function isoToDmy(iso: string): string {
+  const { y, m, d } = parseIsoDate(iso);
+  return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y + BUDDHIST_OFFSET}`;
+}
+
+/** "09/10/2569" (พ.ศ.) → "2026-10-09" · วันที่ไม่มีจริง (31/02), พิมพ์ไม่ครบ หรือพิมพ์ปีเป็น ค.ศ. ได้ null */
+export function dmyToIso(text: string): string | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text.trim());
+  if (!match) return null;
+  const [d, m, y] = [Number(match[1]), Number(match[2]), Number(match[3]) - BUDDHIST_OFFSET];
+  if (y < 1900 || m < 1 || m > 12 || d < 1 || d > daysInMonth(y, m)) return null;
+  return toIsoDate(y, m, d);
+}
+
+/** เลื่อนเดือน "YYYY-MM" ไป ±n เดือน (ข้ามปีได้) — ใช้ทั้งปฏิทิน ช่องวันที่ และรายงาน */
+export function shiftMonth(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const total = y * 12 + (m - 1) + n;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
 /** จำนวนวันในเดือน (m = 1–12) */
 export function daysInMonth(y: number, m: number): number {
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
@@ -39,6 +64,7 @@ export function daysBetween(from: string, to: string): number {
 
 const THAI_WEEKDAY_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 
+/** แยกวันที่เป็นส่วน ๆ (วัน เดือน ปี พ.ศ.) ตามเวลาไทย เพื่อประกอบรูปแบบที่ต้องการเอง */
 const thaiParts = (date: Date, options: Intl.DateTimeFormatOptions) =>
   Object.fromEntries(
     new Intl.DateTimeFormat("th-TH-u-ca-buddhist", { timeZone: BANGKOK, ...options })

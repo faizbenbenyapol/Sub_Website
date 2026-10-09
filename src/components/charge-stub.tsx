@@ -7,6 +7,7 @@ import { ServiceLogo } from "./service-logo";
 /**
  * "สลิปตัดเงิน" (docs/03 ข้อ 1) — ต้นขั้วใบเสร็จที่มีเส้นปรุคั่น ซ้ายคือบริการ ขวาคือวันและยอด
  * ใช้เฉพาะรายการที่กำลังจะตัดเงิน (Dashboard, ปฏิทิน) เพื่อให้รูปทรงนี้แปลว่า "จะโดนตัดเงิน" เสมอ
+ * ฝั่งขวากว้างขั้นต่ำเท่ากันทุกใบ เส้นปรุของสลิปที่เรียงกันจึงตรงแนวเดียวกัน (ยอดหลักหมื่นขึ้นไปค่อยขยาย)
  */
 export function ChargeStub({ item, today }: { item: UpcomingItem; today: string }) {
   const days = daysBetween(today, item.date);
@@ -16,12 +17,14 @@ export function ChargeStub({ item, today }: { item: UpcomingItem; today: string 
   return (
     <Link
       href={`/subscriptions/${item.subscriptionId}/edit`}
-      className="glass relative grid grid-cols-[minmax(0,1fr)_auto] rounded-card hover:border-line-strong"
+      className="glass relative grid grid-cols-[minmax(0,1fr)_minmax(9.5rem,auto)] rounded-card hover:border-line-strong"
     >
       <span className="flex min-w-0 items-center gap-3 py-4 pr-3 pl-4">
         <ServiceLogo name={item.name} logoUrl={item.logoUrl} />
         <span className="min-w-0">
-          <span className="block truncate font-display text-lead font-semibold">{item.name}</span>
+          <span className="line-clamp-2 block font-display text-lead leading-snug font-semibold break-words">
+            {item.name}
+          </span>
           <span className={`block text-caption ${isTrial ? "text-due" : "text-text-muted"}`}>
             {isTrial ? "หมดช่วงทดลองใช้ฟรี" : "ตัดเงิน"}
           </span>

@@ -11,22 +11,22 @@ test("S1 สมัคร → empty state → เพิ่มจากคลั�
   await expect(page).toHaveURL(/\/subscriptions\/new/);
 
   // เพิ่ม Netflix จากคลัง → ราคาเติมจากแพ็กเกจแรก (Mobile ฿99)
-  await page.getByLabel("ค้นหาบริการจากคลัง").fill("netf");
+  await page.getByLabel("ค้นหาจากรวมบริการ").fill("netf");
   await page.getByRole("button", { name: /Netflix/ }).click();
   await expect(page.getByLabel("ราคาที่จ่ายจริง (บาท)")).toHaveValue("99.00");
-  await page.getByLabel("วันตัดเงินถัดไป").fill(bangkokDate(3));
+  await page.getByLabel("วันตัดเงินถัดไป", { exact: true }).fill(bangkokDate(3));
   await page.getByRole("button", { name: "เพิ่มรายการ" }).click();
   await expect(page).toHaveURL(/\/subscriptions$/);
   await expect(page.getByText("เพิ่ม Netflix แล้ว")).toBeVisible();
 
   // C1-3 ฟอร์มว่างแสดง error ใต้ช่อง · แล้วเพิ่มเอง
   await page.goto("/subscriptions/new");
-  await page.getByRole("button", { name: "ไม่มีในคลัง? เพิ่มเอง" }).click();
+  await page.getByRole("button", { name: "ไม่มีในรวมบริการ? เพิ่มเอง" }).click();
   await page.getByRole("button", { name: "เพิ่มรายการ" }).click();
   await expect(page.getByText("กรุณากรอกชื่อบริการ")).toBeVisible();
   await page.getByLabel("ชื่อบริการ").fill("ฟิตเนส");
   await page.getByLabel("ราคาที่จ่ายจริง (บาท)").fill("590");
-  await page.getByLabel("วันตัดเงินถัดไป").fill(bangkokDate(10));
+  await page.getByLabel("วันตัดเงินถัดไป", { exact: true }).fill(bangkokDate(10));
   await page.getByRole("button", { name: "เพิ่มรายการ" }).click();
   await expect(page.getByText("เพิ่ม ฟิตเนส แล้ว")).toBeVisible();
 
@@ -41,10 +41,13 @@ test("S1 สมัคร → empty state → เพิ่มจากคลั�
   await day.click();
   await expect(day).toHaveAttribute("aria-current", "date");
 
-  // E4-1 ส่งอีเมลทดสอบ (โหมด console)
+  // E4-1 ส่งอีเมลทดสอบ (โหมด console): API สร้างอีเมล 2 รายการ · ผู้ใช้ทั่วไปเห็นข้อความภาษาธรรมดา ไม่ใช่เรื่อง log
   await page.goto("/settings");
+  const testMail = page.waitForResponse("**/api/me/notifications/test");
   await page.getByRole("button", { name: "ส่งอีเมลทดสอบ" }).click();
-  await expect(page.getByText(/สร้างอีเมลทดสอบแล้ว \(2 รายการ\)/)).toBeVisible();
+  expect((await (await testMail).json()).data.itemCount).toBe(2);
+  await expect(page.getByText("ตอนนี้ระบบยังไม่ได้เปิดการส่งอีเมลจริง")).toBeVisible();
+  await expect(page.getByText("MAIL_TRANSPORT")).toHaveCount(0);
 });
 
 test("S2 ไม่ล็อกอิน → login พร้อม next · user เข้า /admin → 403 · ล็อกอินแล้วกลับหน้าเดิม", async ({
@@ -62,7 +65,7 @@ test("S2 ไม่ล็อกอิน → login พร้อม next · user �
   // open redirect: ?next ที่ชี้ออกนอกเว็บถูกเปลี่ยนเป็นหน้าแรกของผู้ใช้
   await page.goto(`/login?next=${encodeURIComponent("/\t/evil.example")}`);
   await page.getByLabel("อีเมล").fill(DEMO.email);
-  await page.getByLabel("รหัสผ่าน").fill(DEMO.password);
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill(DEMO.password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page).toHaveURL(/localhost:3200\/dashboard/);
   await page.context().clearCookies();
@@ -76,7 +79,7 @@ test("S2 ไม่ล็อกอิน → login พร้อม next · user �
   await page.goto("/calendar");
   await expect(page).toHaveURL(/\/login\?next=%2Fcalendar/);
   await page.getByLabel("อีเมล").fill(account.email);
-  await page.getByLabel("รหัสผ่าน").fill(account.password);
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page).toHaveURL(/\/calendar/);
 });
@@ -86,7 +89,7 @@ test("A2-1 รหัสผิดเห็นข้อความกลาง �
   await page.context().clearCookies();
   await page.goto("/login");
   await page.getByLabel("อีเมล").fill("demo@e2e.local");
-  await page.getByLabel("รหัสผ่าน").fill("wrong-password");
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill("wrong-password");
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page.getByText("อีเมลหรือรหัสผ่านไม่ถูกต้อง")).toBeVisible();
 });
@@ -94,10 +97,10 @@ test("A2-1 รหัสผิดเห็นข้อความกลาง �
 test("S4 ยกเลิก → ย้ายแท็บ ยอดลด → ลบต้องยืนยัน → หาย", async ({ page }) => {
   await registerNewUser(page);
   await page.goto("/subscriptions/new");
-  await page.getByRole("button", { name: "ไม่มีในคลัง? เพิ่มเอง" }).click();
+  await page.getByRole("button", { name: "ไม่มีในรวมบริการ? เพิ่มเอง" }).click();
   await page.getByLabel("ชื่อบริการ").fill("ค่าเน็ตบ้าน");
   await page.getByLabel("ราคาที่จ่ายจริง (บาท)").fill("650");
-  await page.getByLabel("วันตัดเงินถัดไป").fill(bangkokDate(5));
+  await page.getByLabel("วันตัดเงินถัดไป", { exact: true }).fill(bangkokDate(5));
   await page.getByRole("button", { name: "เพิ่มรายการ" }).click();
   await expect(page.getByText("เพิ่ม ค่าเน็ตบ้าน แล้ว")).toBeVisible();
 

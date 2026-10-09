@@ -1,12 +1,12 @@
 // ใส่ข้อมูลเริ่มต้น: หมวด + บริการ + แพ็กเกจ, บัญชี admin และบัญชีตัวอย่าง (รันซ้ำได้ ไม่สร้างของซ้ำ)
 // ใช้: npm run db:seed
 import bcrypt from "bcryptjs";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { anchorDayOf } from "../src/lib/billing";
 import { addDays, todayInBangkok } from "../src/lib/dates";
 import { categories, plans, services, userSubscriptions, users } from "../src/db/schema";
 import { connect } from "./db";
-import { seedCategories, seedServices } from "./seed-data";
+import { seedCategories, seedLogos, seedServices } from "./seed-data";
 
 const { pool, db } = connect();
 
@@ -22,12 +22,23 @@ async function seedCategoryRows() {
   return new Map(rows.map((r) => [r.slug, r.id]));
 }
 
-/** ใส่บริการที่ยังไม่มีพร้อมแพ็กเกจ — บริการที่มีอยู่แล้วไม่แตะ (Admin อาจแก้ไปแล้ว) */
+/**
+ * ใส่บริการที่ยังไม่มีพร้อมแพ็กเกจ — บริการที่มีอยู่แล้วไม่แตะ (Admin อาจแก้ไปแล้ว)
+ * ยกเว้นโลโก้: เติมให้เฉพาะบริการที่ยังไม่มีโลโก้ (DB ที่ seed ไว้ก่อนมีไฟล์โลโก้)
+ */
 async function seedServiceRows(categoryIds: Map<string, number>) {
   let created = 0;
   for (const s of seedServices) {
     const [existing] = await db.select({ id: services.id }).from(services).where(eq(services.slug, s.slug));
-    if (existing) continue;
+    if (existing) {
+      if (seedLogos[s.slug]) {
+        await db
+          .update(services)
+          .set({ logoUrl: seedLogos[s.slug] })
+          .where(and(eq(services.id, existing.id), isNull(services.logoUrl)));
+      }
+      continue;
+    }
     const categoryId = categoryIds.get(s.category);
     if (!categoryId) throw new Error(`ไม่พบหมวด ${s.category} ของ ${s.slug}`);
     const [{ id }] = await db
@@ -36,6 +47,7 @@ async function seedServiceRows(categoryIds: Map<string, number>) {
         slug: s.slug,
         name: s.name,
         categoryId,
+        logoUrl: seedLogos[s.slug] ?? null,
         websiteUrl: s.websiteUrl,
         cancelSteps: s.cancelSteps.join("\n"),
       })
@@ -119,6 +131,7 @@ async function seedDemoSubscriptions(userId: number, otherCategoryId: number) {
   ]);
 }
 
+/** ใส่หมวด → บริการ + แพ็กเกจ → บัญชี admin → บัญชีตัวอย่างพร้อมรายการ แล้วปิดการเชื่อมต่อ */
 async function main() {
   const categoryIds = await seedCategoryRows();
   const createdServices = await seedServiceRows(categoryIds);

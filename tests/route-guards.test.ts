@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = new Set([
   "auth/register",
   "auth/login",
   "auth/logout",
+  "auth/demo", // ปุ่มบัญชีตัวอย่าง: เปิดเฉพาะ DEMO_LOGIN=true และได้แค่บัญชี role user
   "auth/google",
   "auth/google/callback",
   "categories",

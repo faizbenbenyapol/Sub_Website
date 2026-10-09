@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { nextCycleDate, rollForward } from "../billing";
-import { addDays, daysBetween, todayInBangkok } from "../dates";
+import { nextCycleDate, prevCycleDate, rollForward } from "../billing";
+import { addDays, daysBetween, dmyToIso, isoToDmy, todayInBangkok } from "../dates";
 
 describe("nextCycleDate — เลื่อนรอบบิลโดยยึด anchor day", () => {
   it("U-B1 anchor 31 ผ่านเดือนสั้นแล้วกลับมาวันที่ 31 ไม่ไหลเป็น 28", () => {
@@ -20,6 +20,15 @@ describe("nextCycleDate — เลื่อนรอบบิลโดยยึ�
 
   it("ข้ามปีจาก ธ.ค. ไป ม.ค.", () => {
     expect(nextCycleDate("2026-12-15", "monthly", 15)).toBe("2027-01-15");
+  });
+});
+
+describe("prevCycleDate — ถอยรอบบิลหนึ่งรอบ", () => {
+  it("ยึด anchor day: 31 มี.ค. ถอยได้ 28 ก.พ. · ข้ามปี ม.ค. → ธ.ค. · รายปีถอยหนึ่งปี", () => {
+    expect(prevCycleDate("2026-03-31", "monthly", 31)).toBe("2026-02-28");
+    expect(prevCycleDate("2026-01-15", "monthly", 15)).toBe("2025-12-15");
+    expect(prevCycleDate("2028-02-29", "yearly", 29)).toBe("2027-02-28");
+    expect(nextCycleDate(prevCycleDate("2026-10-31", "monthly", 31), "monthly", 31)).toBe("2026-10-31");
   });
 });
 
@@ -50,6 +59,16 @@ describe("dates", () => {
   it("daysBetween นับวันได้ถูกและติดลบเมื่อย้อนหลัง", () => {
     expect(daysBetween("2026-10-07", "2026-10-10")).toBe(3);
     expect(daysBetween("2026-10-10", "2026-10-07")).toBe(-3);
+  });
+
+  it("ช่องวันที่ วว/ดด/ปปปป (พ.ศ.) แปลงไป-กลับกับ ISO และไม่รับวันที่ไม่มีจริง", () => {
+    expect(isoToDmy("2026-10-09")).toBe("09/10/2569");
+    expect(dmyToIso("09/10/2569")).toBe("2026-10-09");
+    expect(dmyToIso("29/02/2571")).toBe("2028-02-29");
+    expect(dmyToIso("29/02/2569")).toBeNull();
+    expect(dmyToIso("31/04/2569")).toBeNull();
+    expect(dmyToIso("09/10/69")).toBeNull();
+    expect(dmyToIso("09/10/2026")).toBeNull(); // พิมพ์ปี ค.ศ. = ปี 1483 ไม่รับ
   });
 });
 

@@ -32,5 +32,6 @@ export const config = {
     "/savings/:path*",
     "/notifications/:path*",
     "/admin/:path*",
+    "/report/:path*",
   ],
 };

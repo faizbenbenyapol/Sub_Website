@@ -16,10 +16,13 @@ const plexThai = IBM_Plex_Sans_Thai({
   weight: ["400", "500", "600"],
 });
 
+// สำรองสำหรับตัวอักษรละตินที่ IBM Plex Sans Thai ไม่มี — แทบไม่ถูกใช้ จึงไม่ preload
+// (preload ไว้ทุกหน้าแต่ไม่ได้ใช้ = เบราว์เซอร์เตือน "preloaded but not used" และเปลืองแบนด์วิดท์)
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({

@@ -23,6 +23,12 @@ export const envSchema = z.object({
     .string()
     .optional()
     .transform((v) => v || undefined),
+  // ปุ่ม "ลองใช้ด้วยบัญชีตัวอย่าง" หน้า login (ไม่บังคับ) — ต้องเปิดเองและมีบัญชี DEMO_EMAIL ที่ seed ไว้แล้ว
+  DEMO_LOGIN: z.stringbool().default(false),
+  DEMO_EMAIL: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim().toLowerCase() || undefined),
 });
 
 export type Env = z.output<typeof envSchema>;

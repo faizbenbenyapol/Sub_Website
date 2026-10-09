@@ -22,11 +22,13 @@ export function CategoryManager({ categories }: { categories: AdminCategoryDto[]
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
 
+  /** เปิด dialog เพิ่ม/แก้หมวด พร้อมล้าง error เดิม */
   function openForm(next: Editing) {
     setErrors({});
     setEditing(next);
   }
 
+  /** บันทึกหมวด (เพิ่มใหม่หรือแก้) แล้วโหลดตารางใหม่ */
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editing) return;
@@ -55,6 +57,7 @@ export function CategoryManager({ categories }: { categories: AdminCategoryDto[]
     router.refresh();
   }
 
+  /** ลบหมวด — ถ้ายังมีบริการอยู่ server ตอบ 409 และแสดงเหตุผล */
   async function remove() {
     if (!deleting) return;
     setPending(true);
@@ -79,7 +82,7 @@ export function CategoryManager({ categories }: { categories: AdminCategoryDto[]
       </div>
 
       <div className="glass relative mt-6 overflow-x-auto rounded-card">
-        <table className="w-full min-w-[520px] text-left">
+        <table className="stack-table w-full min-w-[520px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">
               <th scope="col" className="px-5 py-3 font-medium">
@@ -102,10 +105,18 @@ export function CategoryManager({ categories }: { categories: AdminCategoryDto[]
           <tbody>
             {categories.map((c) => (
               <tr key={c.id} className="border-b border-line last:border-0">
-                <td className="figure px-5 py-3 text-text-muted">{c.sortOrder}</td>
-                <td className="px-5 py-3 font-medium">{c.name}</td>
-                <td className="px-5 py-3 font-mono text-caption text-text-muted">{c.slug}</td>
-                <td className="figure px-5 py-3 text-right">{c.serviceCount}</td>
+                <td data-label="ลำดับ" className="figure px-5 py-3 text-text-muted">
+                  {c.sortOrder}
+                </td>
+                <td data-label="ชื่อหมวด" className="px-5 py-3 font-medium">
+                  {c.name}
+                </td>
+                <td data-label="slug" className="px-5 py-3 font-mono text-caption text-text-muted">
+                  {c.slug}
+                </td>
+                <td data-label="บริการ" className="figure px-5 py-3 text-right">
+                  {c.serviceCount}
+                </td>
                 <td className="px-5 py-2 text-right whitespace-nowrap">
                   <button
                     onClick={() => openForm({ mode: "edit", category: c })}

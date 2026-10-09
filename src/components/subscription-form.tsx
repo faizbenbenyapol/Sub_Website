@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { ServiceLogo } from "@/components/service-logo";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { MoneyField, SelectField } from "@/components/ui/fields";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -68,6 +69,7 @@ export function SubscriptionForm({ services, categories, today, initial, presele
     }
   }
 
+  /** บันทึกรายการ: ประกอบข้อมูลตามโหมด (จากรวมบริการ/เพิ่มเอง) ตรวจด้วย schema แล้วเพิ่มหรือแก้ */
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
@@ -145,7 +147,7 @@ export function SubscriptionForm({ services, categories, today, initial, presele
       {mode === "catalog" && !service && initial && (
         // บริการถูก admin ซ่อนไปแล้ว: ยังแก้ราคา/วันที่ได้ แต่เปลี่ยนแพ็กเกจไม่ได้
         <p className="text-text-muted">
-          {initial.name} · {initial.plan?.name} (บริการนี้ไม่อยู่ในคลังแล้ว เปลี่ยนแพ็กเกจไม่ได้)
+          {initial.name} · {initial.plan?.name} (บริการนี้ไม่อยู่ในรวมบริการแล้ว เปลี่ยนแพ็กเกจไม่ได้)
         </p>
       )}
 
@@ -178,7 +180,7 @@ export function SubscriptionForm({ services, categories, today, initial, presele
               onClick={() => setMode("pick")}
               className="min-h-11 justify-self-start rounded-control px-0 text-link sm:col-span-2"
             >
-              ← กลับไปเลือกจากคลังบริการ
+              ← กลับไปเลือกจากรวมบริการ
             </button>
           )}
         </div>
@@ -190,7 +192,7 @@ export function SubscriptionForm({ services, categories, today, initial, presele
           name="price"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          hint={mode === "catalog" ? "เติมจากราคาในคลังแล้ว แก้ได้ถ้าได้ราคาโปรฯ" : undefined}
+          hint={mode === "catalog" ? "เติมจากราคาในรวมบริการแล้ว แก้ได้ถ้าได้ราคาโปรฯ" : undefined}
           error={errors.price}
         />
         <SelectField
@@ -203,10 +205,9 @@ export function SubscriptionForm({ services, categories, today, initial, presele
           <option value="monthly">รายเดือน</option>
           <option value="yearly">รายปี</option>
         </SelectField>
-        <TextField
+        <DateField
           label="วันตัดเงินถัดไป"
           name="nextBillingDate"
-          type="date"
           min={today}
           defaultValue={initial?.status === "active" ? initial.nextBillingDate : ""}
           hint="ระบบจะเลื่อนไปรอบถัดไปให้เองหลังถึงวันตัดเงิน"
@@ -229,10 +230,9 @@ export function SubscriptionForm({ services, categories, today, initial, presele
             placeholder="เช่น บัตร KBank, App Store"
             error={errors.paymentMethod}
           />
-          <TextField
+          <DateField
             label="วันหมดช่วงทดลองใช้ฟรี"
             name="trialEndsAt"
-            type="date"
             defaultValue={initial?.trialEndsAt ?? ""}
             hint="ใส่ไว้แล้วจะได้อีเมลเตือนก่อนเริ่มเก็บเงิน"
             error={errors.trialEndsAt}
@@ -248,7 +248,7 @@ export function SubscriptionForm({ services, categories, today, initial, presele
       </details>
 
       {/* มือถือ: ปุ่มหลักติดล่างจอเหนือแถบเมนู (docs/03 ข้อ 6) */}
-      <div className="sticky bottom-20 z-10 -mx-4 bg-night/85 px-4 py-3 backdrop-blur md:static md:mx-0 md:bg-transparent md:p-0">
+      <div className="sticky bottom-20 z-10 -mx-4 bg-night/85 px-4 py-3 backdrop-blur md:-mx-8 md:px-8 lg:static lg:mx-0 lg:bg-transparent lg:p-0">
         <Button type="submit" disabled={pending} className="w-full md:w-auto">
           {pending ? "กำลังบันทึก…" : editing ? "บันทึกการเปลี่ยนแปลง" : "เพิ่มรายการ"}
         </Button>
@@ -336,7 +336,7 @@ function ServicePicker({
   return (
     <div className="flex flex-col gap-4">
       <TextField
-        label="ค้นหาบริการจากคลัง"
+        label="ค้นหาจากรวมบริการ"
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -348,12 +348,12 @@ function ServicePicker({
         onClick={onCustom}
         className="min-h-11 self-start rounded-control font-medium text-link underline underline-offset-4"
       >
-        ไม่มีในคลัง? เพิ่มเอง
+        ไม่มีในรวมบริการ? เพิ่มเอง
       </button>
       {shown.length === 0 ? (
-        <p className="text-text-muted">ไม่พบ &quot;{q}&quot; ในคลัง — กด เพิ่มเอง ด้านบนได้เลย</p>
+        <p className="text-text-muted">ไม่พบ &quot;{q}&quot; ในรวมบริการ — กด เพิ่มเอง ด้านบนได้เลย</p>
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2" aria-label="บริการในคลัง">
+        <ul className="grid gap-2 sm:grid-cols-2" aria-label="บริการในรวมบริการ">
           {shown.map((s) => (
             <li key={s.id}>
               <button

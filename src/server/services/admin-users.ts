@@ -81,6 +81,47 @@ export async function setUserStatus(adminId: number, userId: number, status: "ac
   return toAdminUserDto({ ...target, status });
 }
 
+/**
+ * เปลี่ยนสิทธิ์ผู้ใช้ทั่วไป ↔ ผู้ดูแลระบบ — เปลี่ยนของตัวเองไม่ได้ (กันล็อกตัวเองออกจากหลังบ้าน)
+ * ล้าง session ของคนนั้น: role ถูกฝังใน token ที่ proxy ใช้กันหน้า /admin ต้องล็อกอินใหม่ให้ได้ token ที่ตรงสิทธิ์
+ */
+export async function setUserRole(adminId: number, userId: number, role: "user" | "admin") {
+  const [target] = await db.select(accountColumns).from(users).where(eq(users.id, userId)).limit(1);
+  if (!target) throw new ApiError(404, "NOT_FOUND", "ไม่พบผู้ใช้นี้");
+  if (target.id === adminId) throw new ApiError(400, "VALIDATION_ERROR", "เปลี่ยนสิทธิ์ของตัวเองไม่ได้");
+  if (target.role === role) return toAdminUserDto(target);
+  if (role === "admin" && target.status === "suspended") {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      "บัญชีนี้ถูกระงับอยู่ เปิดใช้งานก่อนจึงจะตั้งเป็นผู้ดูแลระบบได้",
+    );
+  }
+  await db
+    .update(users)
+    .set({ role, sessionVersion: sql`${users.sessionVersion} + 1` })
+    .where(eq(users.id, userId));
+  return toAdminUserDto({ ...target, role });
+}
+
+/**
+ * ลบบัญชีถาวร — ข้อมูลของคนนั้นหายตาม (รายการ, กลุ่มหาร, การแจ้งเตือน, ข้อความแจ้งปัญหา: FK CASCADE)
+ * ลบตัวเองหรือผู้ดูแลระบบไม่ได้ ต้องเปลี่ยนเป็นผู้ใช้ทั่วไปก่อน
+ */
+export async function deleteUser(adminId: number, userId: number) {
+  const [target] = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!target) throw new ApiError(404, "NOT_FOUND", "ไม่พบผู้ใช้นี้");
+  if (target.id === adminId) throw new ApiError(400, "VALIDATION_ERROR", "ลบบัญชีตัวเองไม่ได้");
+  if (target.role === "admin") {
+    throw new ApiError(400, "VALIDATION_ERROR", "ลบบัญชีผู้ดูแลระบบไม่ได้ เปลี่ยนเป็นผู้ใช้ทั่วไปก่อน");
+  }
+  await db.delete(users).where(eq(users.id, userId));
+}
+
 export type AdminDashboardDto = {
   totals: { users: number; activeSubscriptions: number; avgMonthlyPerUser: number; emailsThisMonth: number };
   topServices: { serviceId: number; name: string; count: number }[];

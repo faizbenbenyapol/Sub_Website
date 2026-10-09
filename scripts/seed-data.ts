@@ -1,5 +1,6 @@
-// ข้อมูลคลังบริการเริ่มต้น — ราคาเป็นบาท (รวม VAT) เก็บเมื่อ 6 ต.ค. 2569
-// source: แหล่งที่ใช้ยืนยันราคา ("official" = หน้าเว็บของบริการเอง) — ก่อน demo ให้สุ่มตรวจซ้ำ
+// ข้อมูลคลังบริการเริ่มต้น — ราคาเป็นบาท (รวม VAT) เก็บเมื่อ 6 ต.ค. 2569 · ตรวจซ้ำและเพิ่มบริการ 9 ต.ค. 2569
+// source: แหล่งที่ใช้ยืนยันราคา ("official" = หน้าเว็บของบริการเอง, "App Store TH" = ราคาซื้อในแอป iPhone ไทย
+// ซึ่งบางบริการแพงกว่าสมัครผ่านเว็บ/Android) — ก่อน demo ให้สุ่มตรวจซ้ำ
 // cancelSteps: 1 บรรทัด = 1 ขั้นตอน (เรนเดอร์เป็น <ol>)
 
 export type SeedPlan = { name: string; price: number; cycle: "monthly" | "yearly"; maxMembers?: number };
@@ -29,6 +30,13 @@ const appleCancel = [
   "แตะ ยกเลิกการสมัครรับ แล้วยืนยัน — ใช้ได้ถึงวันสิ้นรอบบิลปัจจุบัน",
 ];
 
+/** บริการที่ราคาอ้างอิงจาก App Store: ยกเลิกที่ร้านแอปที่สมัครไว้ */
+const storeCancel = (app: string) => [
+  ...appleCancel,
+  `ถ้าสมัครผ่าน Android: Play Store → รูปโปรไฟล์ → การชำระเงินและการสมัครใช้บริการ → การสมัครใช้บริการ → ${app} → ยกเลิก`,
+];
+
+/** ขั้นตอนยกเลิกสำหรับบริการที่สมัครผ่าน Google Play / iPhone (ใส่ชื่อแอป) */
 const googlePlayCancel = (app: string) => [
   "ถ้าสมัครผ่าน Google Play: เปิดแอป Play Store แตะรูปโปรไฟล์ → การชำระเงินและการสมัครใช้บริการ → การสมัครใช้บริการ",
   `เลือก ${app} แล้วแตะ ยกเลิกการสมัครใช้บริการ`,
@@ -182,6 +190,71 @@ export const seedServices: SeedService[] = [
       ...googlePlayCancel("WeTV"),
     ],
   },
+  {
+    slug: "bilibili",
+    name: "Bilibili",
+    category: "video",
+    websiteUrl: "https://www.bilibili.tv/th",
+    source: "App Store TH (แอป bilibili - Anime · Video HD ของ BILIBILI SINGAPORE)",
+    plans: [
+      { name: "Premium", price: 69, cycle: "monthly" },
+      { name: "Premium รายปี", price: 639, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "ถ้าสมัครบนเว็บ: เข้า bilibili.tv แล้วเข้าสู่ระบบ → รูปโปรไฟล์ → Premium → ยกเลิกการต่ออายุอัตโนมัติ",
+      ...storeCancel("bilibili"),
+    ],
+  },
+  {
+    slug: "trueid-plus",
+    name: "TrueID+",
+    category: "video",
+    websiteUrl: "https://www.trueid.net",
+    source: "App Store TH (TrueID+ Monthly No Promotions / Yearly Package)",
+    plans: [
+      { name: "รายเดือน", price: 59, cycle: "monthly" },
+      { name: "รายปี", price: 599, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "ถ้าหักผ่านเบอร์ทรู: เปิดแอป True iService เพื่อดูและยกเลิกแพ็กเสริม",
+      "ถ้าสมัครในแอป TrueID: ไปที่ บัญชี → แพ็กเกจของฉัน → ยกเลิกการต่ออายุ",
+      "ถ้าสมัครผ่าน iPhone: การตั้งค่า → ชื่อของคุณ → การสมัครรับ → TrueID → ยกเลิก",
+    ],
+  },
+  {
+    slug: "monomax",
+    name: "MONOMAX",
+    category: "video",
+    websiteUrl: "https://www.monomax.me",
+    source: "App Store TH (Entertainment Monthly / Yearly, Sports Basic Monthly)",
+    plans: [
+      { name: "Entertainment", price: 139, cycle: "monthly" },
+      { name: "Entertainment รายปี", price: 859, cycle: "yearly" },
+      { name: "Sports Basic", price: 219, cycle: "monthly" },
+    ],
+    cancelSteps: [
+      "เข้า monomax.me แล้วเข้าสู่ระบบ → บัญชีของฉัน → แพ็กเกจของฉัน",
+      "กด ยกเลิกการต่ออายุอัตโนมัติ แล้วยืนยัน",
+      "ถ้าสมัครผ่าน AIS หรือ iPhone ให้ยกเลิกที่ช่องทางที่สมัคร",
+    ],
+  },
+  {
+    slug: "crunchyroll",
+    name: "Crunchyroll",
+    category: "video",
+    websiteUrl: "https://www.crunchyroll.com",
+    source: "App Store TH",
+    plans: [
+      { name: "Fan", price: 99, cycle: "monthly" },
+      { name: "Mega Fan", price: 119, cycle: "monthly", maxMembers: 4 },
+      { name: "Mega Fan รายปี", price: 999, cycle: "yearly", maxMembers: 4 },
+    ],
+    cancelSteps: [
+      "เข้า crunchyroll.com แล้วเข้าสู่ระบบ → รูปโปรไฟล์ → Settings → Membership Info",
+      "กด Cancel Membership แล้วยืนยัน",
+      "ถ้าสมัครผ่าน iPhone/Android ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
 
   // ─── ฟังเพลง ───
   {
@@ -214,6 +287,31 @@ export const seedServices: SeedService[] = [
       { name: "นักศึกษา", price: 79, cycle: "monthly" },
     ],
     cancelSteps: appleCancel,
+  },
+  {
+    slug: "joox",
+    name: "JOOX VIP",
+    category: "music",
+    websiteUrl: "https://www.joox.com/th",
+    source: "App Store TH (JOOX VIP monthly subscription)",
+    plans: [{ name: "VIP", price: 129, cycle: "monthly" }],
+    cancelSteps: ["ถ้าหักผ่านเบอร์มือถือ: ยกเลิกที่แอปของค่ายมือถือ", ...storeCancel("JOOX")],
+  },
+  {
+    slug: "youtube-music",
+    name: "YouTube Music",
+    category: "music",
+    websiteUrl: "https://music.youtube.com",
+    source: "App Store TH (ราคา iPhone) — สมัครผ่านเว็บ/Android อาจถูกกว่า",
+    plans: [
+      { name: "รายบุคคล", price: 199, cycle: "monthly" },
+      { name: "ครอบครัว", price: 319, cycle: "monthly", maxMembers: 6 },
+    ],
+    cancelSteps: [
+      "เข้า youtube.com/paid_memberships แล้วเข้าสู่ระบบ",
+      "กด จัดการการเป็นสมาชิก ที่ YouTube Music Premium",
+      "กด ปิดใช้งาน → ยกเลิก แล้วยืนยัน",
+    ],
   },
 
   // ─── เก็บไฟล์ ───
@@ -251,6 +349,24 @@ export const seedServices: SeedService[] = [
       "เข้า one.google.com แล้วเข้าสู่ระบบ",
       "ไปที่ การตั้งค่า → ยกเลิกการเป็นสมาชิก",
       "ยืนยันการยกเลิก — พื้นที่จะกลับเป็น 15 GB เมื่อสิ้นรอบบิล",
+    ],
+  },
+  {
+    slug: "dropbox",
+    name: "Dropbox",
+    category: "storage",
+    websiteUrl: "https://www.dropbox.com/plans",
+    source: "App Store TH",
+    plans: [
+      { name: "Plus 2 TB", price: 379, cycle: "monthly" },
+      { name: "Plus 2 TB รายปี", price: 3800, cycle: "yearly" },
+      { name: "Family 2 TB", price: 609, cycle: "monthly", maxMembers: 6 },
+      { name: "Professional 3 TB", price: 669, cycle: "monthly" },
+    ],
+    cancelSteps: [
+      "เข้า dropbox.com แล้วเข้าสู่ระบบ → รูปโปรไฟล์ → การตั้งค่า → แผน",
+      "กด ยกเลิกแผน แล้วทำตามขั้นตอน — กลับเป็น Basic 2 GB เมื่อสิ้นรอบบิล",
+      "ถ้าสมัครผ่าน iPhone/Android ต้องยกเลิกที่ร้านแอปแทน",
     ],
   },
 
@@ -302,6 +418,118 @@ export const seedServices: SeedService[] = [
       "กด จัดการ ที่แผนปัจจุบัน → ยกเลิกแผน แล้วยืนยัน",
     ],
   },
+  {
+    slug: "claude",
+    name: "Claude",
+    category: "work",
+    websiteUrl: "https://claude.ai",
+    source: "App Store TH — สมัครผ่านเว็บคิดเป็นดอลลาร์ (Pro $20/เดือน) ยอดบาทขึ้นกับอัตราแลกเปลี่ยน",
+    plans: [
+      { name: "Pro", price: 699, cycle: "monthly" },
+      { name: "Pro รายปี", price: 7990, cycle: "yearly" },
+      { name: "Max 5x", price: 4990, cycle: "monthly" },
+      { name: "Max 20x", price: 9990, cycle: "monthly" },
+    ],
+    cancelSteps: [
+      "เข้า claude.ai แล้วเข้าสู่ระบบ → กดชื่อบัญชี → Settings → Billing",
+      "กด Cancel plan แล้วยืนยัน — ใช้ได้ถึงวันสิ้นรอบบิล",
+      "ถ้าสมัครผ่าน iPhone/Android ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
+  {
+    slug: "perplexity",
+    name: "Perplexity Pro",
+    category: "work",
+    websiteUrl: "https://www.perplexity.ai",
+    source: "App Store TH",
+    plans: [
+      { name: "Pro", price: 699, cycle: "monthly" },
+      { name: "Pro รายปี", price: 6990, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เข้า perplexity.ai แล้วเข้าสู่ระบบ → Settings → Subscription",
+      "กด Manage subscription → Cancel แล้วยืนยัน",
+      "ถ้าสมัครผ่าน iPhone/Android ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
+  {
+    slug: "notion",
+    name: "Notion",
+    category: "work",
+    websiteUrl: "https://www.notion.com/pricing",
+    source: "App Store TH — สมัครผ่านเว็บคิดเป็นดอลลาร์",
+    plans: [
+      { name: "Plus", price: 399, cycle: "monthly" },
+      { name: "Plus รายปี", price: 3990, cycle: "yearly" },
+      { name: "Business", price: 899, cycle: "monthly" },
+    ],
+    cancelSteps: [
+      "เปิด Notion → Settings → Billing (ต้องเป็นเจ้าของ workspace)",
+      "กด Change plan → เปลี่ยนเป็น Free แล้วยืนยัน",
+      "ถ้าสมัครผ่าน iPhone ต้องยกเลิกที่ การตั้งค่า → ชื่อของคุณ → การสมัครรับ",
+    ],
+  },
+  {
+    slug: "capcut",
+    name: "CapCut Pro",
+    category: "work",
+    websiteUrl: "https://www.capcut.com",
+    source: "App Store TH",
+    plans: [
+      { name: "Standard", price: 150, cycle: "monthly" },
+      { name: "Standard รายปี", price: 909, cycle: "yearly" },
+      { name: "Pro", price: 289, cycle: "monthly" },
+    ],
+    cancelSteps: storeCancel("CapCut"),
+  },
+  {
+    slug: "adobe-photoshop",
+    name: "Adobe Photoshop",
+    category: "work",
+    websiteUrl: "https://www.adobe.com/th/products/photoshop.html",
+    source: "App Store TH (Photoshop Mobile & Web)",
+    plans: [
+      { name: "Mobile & Web", price: 299, cycle: "monthly" },
+      { name: "Mobile & Web รายปี", price: 2490, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "ถ้าสมัครกับ Adobe: เข้า account.adobe.com/plans → จัดการแผน → ยกเลิกแผน",
+      "แผนรายปีที่จ่ายรายเดือนอาจมีค่าธรรมเนียมยกเลิกก่อนครบปี อ่านเงื่อนไขก่อนยืนยัน",
+      "ถ้าสมัครผ่าน iPhone/Android ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
+  {
+    slug: "zoom",
+    name: "Zoom Workplace Pro",
+    category: "work",
+    websiteUrl: "https://www.zoom.com",
+    source: "App Store TH",
+    plans: [
+      { name: "Pro", price: 395, cycle: "monthly" },
+      { name: "Pro รายปี", price: 3950, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เข้า zoom.us แล้วเข้าสู่ระบบ → การจัดการบัญชี → การเรียกเก็บเงิน",
+      "ที่แผนปัจจุบัน กด ยกเลิกการสมัครสมาชิก แล้วยืนยัน",
+      "ถ้าสมัครผ่าน iPhone ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
+  {
+    slug: "grammarly",
+    name: "Grammarly Pro",
+    category: "work",
+    websiteUrl: "https://www.grammarly.com/plans",
+    source: "App Store TH — สมัครผ่านเว็บคิดเป็นดอลลาร์",
+    plans: [
+      { name: "Pro", price: 989, cycle: "monthly" },
+      { name: "Pro รายปี", price: 4500, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เข้า account.grammarly.com/subscription แล้วเข้าสู่ระบบ",
+      "กด Cancel Subscription แล้วยืนยัน",
+      "ถ้าสมัครผ่าน iPhone ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
 
   // ─── เกม ───
   {
@@ -321,6 +549,23 @@ export const seedServices: SeedService[] = [
       "หรือเข้า playstation.com → การจัดการการสมัครใช้งาน บนเว็บ",
     ],
   },
+  {
+    slug: "discord-nitro",
+    name: "Discord Nitro",
+    category: "game",
+    websiteUrl: "https://discord.com/nitro",
+    source: "App Store TH",
+    plans: [
+      { name: "Nitro Basic", price: 79, cycle: "monthly" },
+      { name: "Nitro", price: 219, cycle: "monthly" },
+      { name: "Nitro รายปี", price: 2200, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เปิด Discord → การตั้งค่าผู้ใช้ (รูปเฟือง) → การสมัครสมาชิก",
+      "กด ยกเลิก ที่ Nitro แล้วยืนยัน — ใช้ได้ถึงวันสิ้นรอบบิล",
+      "ถ้าสมัครผ่าน iPhone ต้องยกเลิกที่ร้านแอปแทน",
+    ],
+  },
 
   // ─── อื่น ๆ ───
   {
@@ -335,4 +580,105 @@ export const seedServices: SeedService[] = [
     ],
     cancelSteps: appleCancel,
   },
+  {
+    slug: "shopee-vip",
+    name: "Shopee VIP",
+    category: "other",
+    websiteUrl: "https://shopee.co.th",
+    source:
+      "ข่าว/รีวิว (thairath.co.th, marketthink.co) — สมัครได้ในแอป Shopee เท่านั้น ราคาโปรเดือนแรกอาจต่างกัน",
+    plans: [{ name: "รายเดือน", price: 49, cycle: "monthly" }],
+    cancelSteps: [
+      "เปิดแอป Shopee → ฉัน → ShopeeVIP",
+      "กด จัดการการสมัคร → ยกเลิกการต่ออายุอัตโนมัติ แล้วยืนยัน",
+      "สิทธิ์และโค้ดยังใช้ได้ถึงวันสิ้นรอบบิล",
+    ],
+  },
+  {
+    slug: "line-man-vip",
+    name: "LINE MAN VIP",
+    category: "other",
+    websiteUrl: "https://lineman.line.me/linemanvip/",
+    source: "official: lineman.line.me/linemanvip + wongnai.com",
+    plans: [
+      { name: "รายเดือน", price: 19, cycle: "monthly" },
+      { name: "รายปี", price: 99, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เปิดแอป LINE MAN → อื่น ๆ → LINE MAN VIP",
+      "กด จัดการแพ็กเกจ → ยกเลิกการต่ออายุ แล้วยืนยัน",
+    ],
+  },
+  {
+    slug: "grab-unlimited",
+    name: "GrabUnlimited",
+    category: "other",
+    websiteUrl: "https://www.grab.com/th/grabunlimited/",
+    source: "official: grab.com/th/grabunlimited",
+    plans: [
+      { name: "รายเดือน", price: 19, cycle: "monthly" },
+      { name: "รายปี", price: 99, cycle: "yearly" },
+    ],
+    cancelSteps: [
+      "เปิดแอป Grab → บัญชี → GrabUnlimited",
+      "กด จัดการการเป็นสมาชิก → ยกเลิกการเป็นสมาชิก แล้วยืนยัน",
+    ],
+  },
+  {
+    slug: "telegram-premium",
+    name: "Telegram Premium",
+    category: "other",
+    websiteUrl: "https://telegram.org",
+    source: "App Store TH",
+    plans: [
+      { name: "รายเดือน", price: 179, cycle: "monthly" },
+      { name: "รายปี", price: 1290, cycle: "yearly" },
+    ],
+    cancelSteps: storeCancel("Telegram"),
+  },
 ];
+
+/**
+ * โลโก้ของแต่ละบริการ เก็บไว้ใน public/logos (ไม่พึ่งเว็บภายนอกตอน demo)
+ * ไอคอนเว็บของบริการ หรือไอคอนแอปจาก App Store (256px) เมื่อไอคอนเว็บความละเอียดต่ำ
+ * Netflix/Spotify เป็น SVG จาก Simple Icons (CC0) · LINE MAN/TrueID ใช้ไอคอนเว็บเพราะไอคอนแอปติดสติกเกอร์โปรโมชัน
+ */
+export const seedLogos: Record<string, string> = {
+  netflix: "/logos/netflix.svg",
+  "youtube-premium": "/logos/youtube-premium.png",
+  "disney-plus-hotstar": "/logos/disney-plus-hotstar.png",
+  "hbo-max": "/logos/hbo-max.png",
+  "prime-video": "/logos/prime-video.png",
+  "apple-tv": "/logos/apple-tv.png",
+  iqiyi: "/logos/iqiyi.png",
+  viu: "/logos/viu.png",
+  wetv: "/logos/wetv.png",
+  spotify: "/logos/spotify.svg",
+  "apple-music": "/logos/apple-music.png",
+  "icloud-plus": "/logos/icloud-plus.png",
+  "google-one": "/logos/google-one.png",
+  "microsoft-365": "/logos/microsoft-365.png",
+  canva: "/logos/canva.png",
+  chatgpt: "/logos/chatgpt.png",
+  "playstation-plus": "/logos/playstation-plus.png",
+  "apple-one": "/logos/apple-one.png",
+  bilibili: "/logos/bilibili.png",
+  "trueid-plus": "/logos/trueid-plus.png",
+  monomax: "/logos/monomax.png",
+  crunchyroll: "/logos/crunchyroll.png",
+  joox: "/logos/joox.png",
+  "youtube-music": "/logos/youtube-music.png",
+  dropbox: "/logos/dropbox.png",
+  claude: "/logos/claude.png",
+  perplexity: "/logos/perplexity.png",
+  notion: "/logos/notion.png",
+  capcut: "/logos/capcut.png",
+  "adobe-photoshop": "/logos/adobe-photoshop.png",
+  zoom: "/logos/zoom.png",
+  grammarly: "/logos/grammarly.png",
+  "discord-nitro": "/logos/discord-nitro.png",
+  "shopee-vip": "/logos/shopee-vip.png",
+  "line-man-vip": "/logos/line-man-vip.png",
+  "grab-unlimited": "/logos/grab-unlimited.png",
+  "telegram-premium": "/logos/telegram-premium.png",
+};

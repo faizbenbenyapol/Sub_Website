@@ -16,6 +16,7 @@ vi.mock("next/headers", () => ({
 
 // ลำดับไม่สำคัญเพราะปิด foreign key check ระหว่างล้าง
 const TABLES = [
+  "feedback",
   "member_payments",
   "group_members",
   "share_groups",

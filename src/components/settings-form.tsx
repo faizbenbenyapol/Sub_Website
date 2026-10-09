@@ -20,6 +20,7 @@ export function NotificationSettingsForm({
   const [enabled, setEnabled] = useState(initial.notifyEnabled);
   const [pending, setPending] = useState(false);
 
+  /** บันทึกเปิด/ปิดการแจ้งเตือนและจำนวนวันล่วงหน้า */
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const days = Number(new FormData(e.currentTarget).get("notifyDaysBefore")) as 1 | 3 | 7;
@@ -71,11 +72,15 @@ export function NotificationSettingsForm({
   );
 }
 
-/** ปุ่มส่งอีเมลทดสอบทันที (US-E4) */
-export function TestEmailButton({ consoleMode }: { consoleMode: boolean }) {
+/**
+ * ปุ่มส่งอีเมลทดสอบทันที (US-E4)
+ * โหมด console (ยังไม่ได้ตั้งค่าส่งอีเมลจริง): admin ได้ข้อความเทคนิค ผู้ใช้ทั่วไปได้ภาษาธรรมดาว่ายังส่งไม่ได้
+ */
+export function TestEmailButton({ consoleMode, isAdmin }: { consoleMode: boolean; isAdmin: boolean }) {
   const toast = useToast();
   const [pending, setPending] = useState(false);
 
+  /** สั่งส่งอีเมลทดสอบทันที แล้วบอกผลตามโหมดการส่งของเซิร์ฟเวอร์ */
   async function send() {
     setPending(true);
     const res = await apiFetch<{ sentTo: string; itemCount: number }>("/api/me/notifications/test", {
@@ -83,10 +88,13 @@ export function TestEmailButton({ consoleMode }: { consoleMode: boolean }) {
     });
     setPending(false);
     if (!res.ok) return toast(res.error.message, "error");
+    if (!consoleMode)
+      return toast(`ส่งอีเมลทดสอบไปที่ ${res.data.sentTo} แล้ว (${res.data.itemCount} รายการ)`);
     toast(
-      consoleMode
+      isAdmin
         ? `สร้างอีเมลทดสอบแล้ว (${res.data.itemCount} รายการ) — โหมด console ดูได้ใน log ของเซิร์ฟเวอร์`
-        : `ส่งอีเมลทดสอบไปที่ ${res.data.sentTo} แล้ว (${res.data.itemCount} รายการ)`,
+        : "ตอนนี้ระบบยังไม่ได้เปิดการส่งอีเมลจริง จึงยังไม่มีอีเมลเข้ากล่องจดหมาย",
+      isAdmin ? undefined : "error",
     );
   }
 

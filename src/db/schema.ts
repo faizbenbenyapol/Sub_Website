@@ -22,11 +22,14 @@ import {
 const id = () => int({ unsigned: true }).autoincrement().primaryKey();
 /** foreign key ชี้ไปที่ id ของตารางอื่น */
 const fk = () => int({ unsigned: true });
+/** เงินบาท DECIMAL(10,2) — อ่านออกมาเป็น string แล้วคำนวณผ่าน lib/money.ts */
 const money = () => decimal({ precision: 10, scale: 2 });
+/** เวลาที่สร้างแถว (DB ใส่ให้เอง) */
 const createdAt = () =>
   datetime({ mode: "date" })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`);
+/** เวลาที่แก้แถวล่าสุด (อัปเดตทุกครั้งที่ update ผ่าน Drizzle) */
 const updatedAt = () =>
   datetime({ mode: "date" })
     .notNull()
@@ -157,7 +160,13 @@ export const notifications = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     userSubscriptionId: fk().references(() => userSubscriptions.id, { onDelete: "set null" }),
-    type: mysqlEnum(["billing_reminder", "trial_ending", "member_reminder", "test"]).notNull(),
+    type: mysqlEnum([
+      "billing_reminder",
+      "trial_ending",
+      "member_reminder",
+      "test",
+      "feedback_reply",
+    ]).notNull(),
     channel: mysqlEnum(["email", "in_app"]).notNull(),
     title: varchar({ length: 200 }).notNull(),
     body: varchar({ length: 1000 }).notNull(),
@@ -222,6 +231,34 @@ export const memberPayments = mysqlTable(
     updatedAt: updatedAt(),
   },
   (t) => [uniqueIndex("member_payments_member_period_uq").on(t.memberId, t.period)],
+);
+
+// ─── รายงานปัญหา / คำแนะนำถึงผู้พัฒนา ─────────────────────────
+
+export const feedbackKinds = ["bug", "suggestion", "other"] as const;
+// new = ยังไม่มีใครเปิดอ่าน · read = อ่าน/ตอบแล้ว ไม่ต้องติดตาม (เช่น คำชม) · ที่เหลือคือ 3 ขั้นที่ผู้ใช้เห็นเป็นแถบความคืบหน้า
+export const feedbackStatuses = ["new", "read", "acknowledged", "in_progress", "resolved"] as const;
+
+/** ข้อความที่ผู้ใช้ส่งจากหน้าตั้งค่า — admin อ่าน ตอบกลับ และเปลี่ยนสถานะในหลังบ้าน */
+export const feedback = mysqlTable(
+  "feedback",
+  {
+    id: id(),
+    userId: fk()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: mysqlEnum(feedbackKinds).notNull(),
+    message: text().notNull(),
+    status: mysqlEnum(feedbackStatuses).notNull().default("new"),
+    reply: text(), // คำตอบจาก admin (null = ยังไม่ตอบ) ผู้ใช้เห็นใต้ข้อความในหน้าตั้งค่า
+    repliedAt: datetime({ mode: "date" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("feedback_status_created_idx").on(t.status, t.createdAt),
+    index("feedback_user_created_idx").on(t.userId, t.createdAt),
+  ],
 );
 
 export type User = typeof users.$inferSelect;

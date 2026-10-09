@@ -25,7 +25,9 @@ export function LineChart({ data, label }: { data: Point[]; label: string }) {
   const max = niceMax(Math.max(...data.map((d) => d.count), 0));
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
+  /** ตำแหน่งแนวนอนของจุดที่ i ในกราฟ */
   const x = (i: number) => PAD.left + (data.length > 1 ? (i / (data.length - 1)) * innerW : innerW / 2);
+  /** ตำแหน่งแนวตั้งของค่า v (ค่ามากอยู่สูง) */
   const y = (v: number) => PAD.top + innerH - (v / max) * innerH;
   const line = data.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d.count).toFixed(1)}`).join("");
   const area = `${line}L${x(data.length - 1)},${y(0)}L${x(0)},${y(0)}Z`;

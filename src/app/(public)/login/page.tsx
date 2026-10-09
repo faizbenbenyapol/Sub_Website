@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { redirectIfSignedIn } from "@/server/auth";
-import { googleEnabled } from "@/server/env";
+import { demoLoginEnabled, googleEnabled } from "@/server/env";
 
 export const metadata: Metadata = { title: "เข้าสู่ระบบ" };
 
@@ -16,6 +16,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         mode="login"
         next={typeof next === "string" ? next : undefined}
         googleEnabled={googleEnabled}
+        demoEnabled={demoLoginEnabled}
         error={typeof error === "string" ? error : undefined}
       />
     </AuthShell>

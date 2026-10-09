@@ -6,14 +6,15 @@ import { LogoutButton } from "./logout-button";
 
 // เมนูฝั่งผู้ใช้ (docs/03 ข้อ 6)
 // มือถือ: แถบล่าง ภาพรวม · รายการ · [+] · ปฏิทิน · ตั้งค่า — ปุ่มเพิ่มรายการกลางแถบในระยะนิ้วโป้ง
-// desktop: แถบบน มีหารค่าบริการ + คลังบริการเพิ่ม เพราะที่ว่างพอ (มือถือเข้ากลุ่มหารจากหน้ารายการ)
+// desktop (lg+): แถบบน มีหารค่าบริการ + รวมบริการเพิ่ม เพราะที่ว่างพอ (มือถือ/แท็บเล็ตเข้ากลุ่มหารจากหน้ารายการ)
+// ทุกปุ่มบนแถบบนเป็น whitespace-nowrap — ไม่ให้คำไทยหักเป็นสองบรรทัดเมื่อที่แคบ
 
 const DESKTOP_ITEMS = [
   { href: "/dashboard", label: "ภาพรวม" },
   { href: "/subscriptions", label: "รายการ" },
   { href: "/groups", label: "หารค่าบริการ" },
   { href: "/calendar", label: "ปฏิทิน" },
-  { href: "/services", label: "คลังบริการ" },
+  { href: "/services", label: "รวมบริการ" },
   { href: "/settings", label: "ตั้งค่า" },
 ];
 
@@ -23,15 +24,8 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppNav({
-  name,
-  isAdmin,
-  unreadCount,
-}: {
-  name: string;
-  isAdmin: boolean;
-  unreadCount: number;
-}) {
+/** แถบเมนูของผู้ใช้ที่ล็อกอินแล้ว: จอใหญ่เป็นแถบบน มือถือ/แท็บเล็ตเป็นแถบล่างพร้อมปุ่ม + กลางแถบ */
+export function AppNav({ isAdmin, unreadCount }: { isAdmin: boolean; unreadCount: number }) {
   const pathname = usePathname();
   const addActive = pathname === "/subscriptions/new";
 
@@ -39,10 +33,10 @@ export function AppNav({
     <>
       <header className="bar sticky top-0 z-20 border-b border-line">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center gap-4 px-4 md:px-8 lg:gap-6">
-          <Link href="/dashboard" className="font-display text-lead font-bold">
+          <Link href="/dashboard" className="shrink-0 font-display text-lead font-bold whitespace-nowrap">
             ตัดยัง?
           </Link>
-          <nav aria-label="เมนูหลัก" className="hidden md:block">
+          <nav aria-label="เมนูหลัก" className="hidden lg:block">
             <ul className="flex gap-1">
               {DESKTOP_ITEMS.map((item) => {
                 const active = isActive(pathname, item.href);
@@ -51,7 +45,7 @@ export function AppNav({
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`flex min-h-11 items-center rounded-control px-3 ${
+                      className={`flex min-h-11 items-center rounded-control px-2.5 whitespace-nowrap xl:px-3 ${
                         active ? "bg-glass-strong font-semibold" : "text-text-muted hover:text-text"
                       }`}
                     >
@@ -62,29 +56,28 @@ export function AppNav({
               })}
             </ul>
           </nav>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <Bell count={unreadCount} active={pathname === "/notifications"} />
             {isAdmin && (
               <Link
                 href="/admin"
-                className="hidden min-h-11 content-center rounded-control px-3 text-caption text-text-muted hover:text-text sm:block"
+                className="hidden min-h-11 content-center rounded-control px-2.5 text-caption whitespace-nowrap text-text-muted hover:text-text sm:block"
               >
                 หลังบ้าน
               </Link>
             )}
             <Link
               href="/subscriptions/new"
-              className="ml-1 hidden h-11 items-center rounded-control bg-paid px-4 font-display font-semibold text-night md:inline-flex"
+              className="ml-1 hidden h-11 items-center rounded-control bg-paid px-4 font-display font-semibold whitespace-nowrap text-night lg:inline-flex"
             >
               เพิ่มรายการ
             </Link>
-            <span className="hidden max-w-40 truncate pl-2 text-text-muted xl:block">{name}</span>
             <LogoutButton />
           </div>
         </div>
       </header>
 
-      <nav aria-label="เมนูหลัก" className="bar fixed inset-x-0 bottom-0 z-20 border-t border-line md:hidden">
+      <nav aria-label="เมนูหลัก" className="bar fixed inset-x-0 bottom-0 z-20 border-t border-line lg:hidden">
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5 items-center px-1 pb-[env(safe-area-inset-bottom)]">
           <MobileItem href="/dashboard" label="ภาพรวม" active={isActive(pathname, "/dashboard")} />
           <MobileItem href="/subscriptions" label="รายการ" active={isActive(pathname, "/subscriptions")} />
@@ -139,6 +132,7 @@ function Bell({ count, active }: { count: number; active: boolean }) {
   );
 }
 
+/** ปุ่มหนึ่งช่องในแถบเมนูล่างบนมือถือ (จุดเขียวบอกหน้าปัจจุบัน) */
 function MobileItem({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
     <li>

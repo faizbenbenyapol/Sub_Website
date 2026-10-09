@@ -10,9 +10,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { unreadCount } = await listNotifications(user.id, { unreadOnly: true, limit: 1 });
   return (
     <>
-      <AppNav name={user.name} isAdmin={user.role === "admin"} unreadCount={unreadCount} />
+      <AppNav isAdmin={user.role === "admin"} unreadCount={unreadCount} />
       {/* pb-28 กันเนื้อหาโดนแถบล่างบนมือถือบัง */}
-      <div className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-16">{children}</div>
+      <div className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 md:px-8 md:pt-10 lg:pb-16">{children}</div>
     </>
   );
 }

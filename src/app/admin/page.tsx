@@ -73,7 +73,7 @@ export default async function AdminHome() {
                 data={topServices.map((s) => ({ label: s.name, value: s.count }))}
               />
             ) : (
-              <p className="text-text-muted">ยังไม่มีผู้ใช้เพิ่มรายการจากคลัง</p>
+              <p className="text-text-muted">ยังไม่มีผู้ใช้เพิ่มรายการจากรวมบริการ</p>
             )}
           </div>
         </section>

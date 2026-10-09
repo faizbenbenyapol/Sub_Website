@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decimalToNumber, formatBaht, satangToDecimal, toSatang } from "../money";
+import { decimalToNumber, formatBaht, formatCompactBaht, satangToDecimal, toSatang } from "../money";
 
 describe("money", () => {
   it("U-M2 คิดเป็นสตางค์แล้วไม่มี float error", () => {
@@ -28,5 +28,16 @@ describe("formatBaht แบบ short", () => {
   it("ตัด .00 เฉพาะจำนวนเต็ม", () => {
     expect(formatBaht(419, { short: true })).toBe("฿419");
     expect(formatBaht(66.5, { short: true })).toBe("฿66.50");
+  });
+});
+
+describe("formatCompactBaht (ช่องวันในปฏิทินบนมือถือ)", () => {
+  it("ต่ำกว่าพันแสดงเต็ม · หลักพันมีทศนิยม 1 ตำแหน่ง · หลักหมื่นขึ้นไปปัดเป็น k", () => {
+    expect(formatCompactBaht(99)).toBe("99");
+    expect(formatCompactBaht(419.5)).toBe("420");
+    expect(formatCompactBaht(1000)).toBe("1k");
+    expect(formatCompactBaht(1200)).toBe("1.2k");
+    expect(formatCompactBaht(2999)).toBe("3k");
+    expect(formatCompactBaht(12990)).toBe("13k");
   });
 });

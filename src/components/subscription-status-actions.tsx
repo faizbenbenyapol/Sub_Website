@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { TextField } from "@/components/ui/text-field";
+import { DateField } from "@/components/ui/date-field";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/api-client";
 
@@ -43,6 +43,7 @@ export function SubscriptionStatusActions({ id, name, status, hasGroup, today }:
     router.refresh();
   }
 
+  /** กลับมาใช้รายการที่ยกเลิกไว้ ต้องเลือกวันตัดเงินถัดไปก่อน */
   function reactivate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const date = String(new FormData(e.currentTarget).get("nextBillingDate") ?? "");
@@ -109,13 +110,7 @@ export function SubscriptionStatusActions({ id, name, status, hasGroup, today }:
 
       <Dialog open={open === "reactivate"} onClose={() => setOpen(null)} title={`กลับมาใช้ ${name}`}>
         <form onSubmit={reactivate} noValidate className="flex flex-col gap-4">
-          <TextField
-            label="วันตัดเงินถัดไป"
-            name="nextBillingDate"
-            type="date"
-            min={today}
-            error={dateError}
-          />
+          <DateField label="วันตัดเงินถัดไป" name="nextBillingDate" min={today} error={dateError} />
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button type="button" variant="secondary" onClick={() => setOpen(null)}>
               ยกเลิก

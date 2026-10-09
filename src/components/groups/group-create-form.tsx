@@ -16,6 +16,7 @@ export type ShareableSubscription = { id: number; name: string; price: number; m
 type MemberRow = { key: number; name: string; email: string; amount: string };
 
 let nextKey = 1;
+/** แถวสมาชิกว่างแถวใหม่ (key ไม่ซ้ำใช้เป็น React key ตอนเพิ่ม/ลบแถว) */
 const emptyRow = (): MemberRow => ({ key: nextKey++, name: "", email: "", amount: "" });
 
 /**
@@ -45,9 +46,11 @@ export function GroupCreateForm({
   const customSum = rows.reduce((s, r) => s + (Number(r.amount) > 0 ? toSatang(Number(r.amount)) : 0), 0);
   const ownerShare = mode === "equal" ? equal.owner : totalSatang - customSum;
 
+  /** แก้ช่องของสมาชิกแถวที่ key ตรง */
   const update = (key: number, patch: Partial<MemberRow>) =>
     setRows((list) => list.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
+  /** สร้างกลุ่มหาร: ตรวจข้อมูลสมาชิกและยอดก่อน แล้วไปหน้าจัดการกลุ่ม */
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);

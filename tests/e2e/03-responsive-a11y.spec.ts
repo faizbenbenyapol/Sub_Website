@@ -17,7 +17,14 @@ const USER_PAGES = [
   "/groups",
   "/groups/new",
 ];
-const ADMIN_PAGES = ["/admin", "/admin/categories", "/admin/services", "/admin/services/new", "/admin/users"];
+const ADMIN_PAGES = [
+  "/admin",
+  "/admin/categories",
+  "/admin/services",
+  "/admin/services/new",
+  "/admin/users",
+  "/admin/feedback",
+];
 
 /** ตรวจหน้าเดียว: โหลดสำเร็จ, ไม่มี scroll แนวนอน, ไม่มี violation ร้ายแรง */
 async function audit(page: Page, path: string) {
@@ -82,7 +89,7 @@ test("N-3 เพิ่มรายการด้วยคีย์บอร์�
   await page.keyboard.type("ไม่มีแน่นอน");
   await expect(page.getByText(/ไม่พบ/)).toBeVisible();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "ไม่มีในคลัง? เพิ่มเอง" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "ไม่มีในรวมบริการ? เพิ่มเอง" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("ชื่อบริการ")).toBeVisible();
   // focus ring มองเห็นได้

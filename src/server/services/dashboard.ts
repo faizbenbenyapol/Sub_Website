@@ -1,8 +1,15 @@
 import "server-only";
-import { addDays } from "@/lib/dates";
+import { prevCycleDate } from "@/lib/billing";
+import { addDays, todayInBangkok } from "@/lib/dates";
 import { fromSatang, toSatang } from "@/lib/money";
-import { groupByDate, monthRange, occurrencesBetween, type UpcomingItem } from "@/lib/schedule";
-import { listSubscriptions } from "./subscriptions";
+import {
+  billingDatesBetween,
+  groupByDate,
+  monthRange,
+  occurrencesBetween,
+  type UpcomingItem,
+} from "@/lib/schedule";
+import { listSubscriptions, type SubscriptionDto } from "./subscriptions";
 
 // Dashboard และปฏิทินของผู้ใช้ (US-D1, D2) — คำนวณจากรายการ active ด้วย lib/schedule.ts
 
@@ -37,6 +44,27 @@ export async function getDashboard(userId: number, today: string): Promise<Dashb
       .sort((a, b) => b.monthly - a.monthly),
     upcoming: occurrencesBetween(items, today, addDays(today, UPCOMING_DAYS)),
   };
+}
+
+export type MonthCharge = { date: string; paid: boolean; item: SubscriptionDto };
+
+/**
+ * สรุปรายเดือนสำหรับรายงาน PDF: รายการ active + ทุกครั้งที่ตัดเงินในเดือนนั้น
+ * เดือนปัจจุบันนับรอบที่ตัดไปแล้วด้วย (ถอยจากวันตัดเงินถัดไปหนึ่งรอบ ถ้าอยู่ในเดือนและหลังวันที่เพิ่มรายการ)
+ */
+export async function getMonthReport(userId: number, month: string, today: string) {
+  const items = await listSubscriptions(userId, "active");
+  const { from, to } = monthRange(month);
+  const charges: MonthCharge[] = [];
+  for (const item of items) {
+    for (const date of billingDatesBetween(item, from, to)) charges.push({ date, paid: date < today, item });
+    const prev = prevCycleDate(item.nextBillingDate, item.billingCycle, item.billingAnchorDay);
+    const added = todayInBangkok(new Date(item.createdAt));
+    if (prev >= from && prev <= to && prev < today && prev >= added)
+      charges.push({ date: prev, paid: true, item });
+  }
+  charges.sort((a, b) => a.date.localeCompare(b.date) || a.item.name.localeCompare(b.item.name, "th"));
+  return { items, charges };
 }
 
 /** ปฏิทินรายเดือน: วันที่มีรายการตัดเงิน/หมดทดลอง (ไม่ฉายย้อนก่อนวันนี้) */

@@ -23,6 +23,7 @@ export function UserStatusButton({
   const [pending, setPending] = useState(false);
   const suspending = status === "active";
 
+  /** ยืนยันระงับ/เปิดใช้งานบัญชี แล้วโหลดตารางใหม่ */
   async function confirm() {
     setPending(true);
     const res = await apiFetch(`/api/admin/users/${id}`, {

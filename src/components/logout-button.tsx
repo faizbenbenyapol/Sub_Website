@@ -9,6 +9,7 @@ export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
+  /** ออกจากระบบแล้วพาไปหน้าเข้าสู่ระบบ */
   async function logout() {
     setPending(true);
     await apiFetch("/api/auth/logout", { method: "POST" });
@@ -21,7 +22,7 @@ export function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="min-h-11 rounded-control px-3 text-text-muted hover:text-text"
+      className="min-h-11 rounded-control px-2.5 whitespace-nowrap text-text-muted hover:text-text"
     >
       ออกจากระบบ
     </button>

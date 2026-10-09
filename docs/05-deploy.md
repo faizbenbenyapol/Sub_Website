@@ -60,7 +60,7 @@ docker compose -f docker-compose.prod.yml exec app npx tsx scripts/preflight.ts
 | `APP_URL` | `https://tadyang.example.com` — ลิงก์ในอีเมล ลิงก์จ่ายเงิน และ redirect ของ Google ใช้ค่านี้ |
 | `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | สุ่มใหม่ ใช้แค่ `A-Z a-z 0-9` |
 | `SESSION_SECRET`, `CRON_SECRET` | สุ่มใหม่ ≥ 32 ตัว (ห้ามใช้ค่าเดียวกับเครื่องพัฒนา) |
-| `MAIL_TRANSPORT=smtp`, `SMTP_*`, `MAIL_FROM` | Gmail App Password (README หัวข้ออีเมลแจ้งเตือน) |
+| `MAIL_TRANSPORT=smtp`, `SMTP_*`, `MAIL_FROM` | Gmail App Password ([06-setup.md](06-setup.md) หัวข้ออีเมลแจ้งเตือน) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | ข้อ 4 — เว้นว่างได้ ปุ่ม Google จะไม่แสดง |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | ใช้ตอน seed เท่านั้น |
 

@@ -17,6 +17,7 @@ export function ServiceDangerZone({ id, name, isActive }: { id: number; name: st
   const [inUse, setInUse] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  /** ลบบริการถาวร — ถ้ามีผู้ใช้ผูกอยู่จะเปลี่ยนเป็นข้อเสนอให้ซ่อนแทน */
   async function remove() {
     setPending(true);
     const res = await apiFetch(`/api/admin/services/${id}`, { method: "DELETE" });
@@ -33,16 +34,18 @@ export function ServiceDangerZone({ id, name, isActive }: { id: number; name: st
     }
   }
 
+  /** ซ่อนบริการจากผู้ใช้ (ข้อมูลผู้ใช้ที่ผูกอยู่ยังอยู่ครบ) */
   async function hide() {
     setPending(true);
     const res = await apiFetch(`/api/admin/services/${id}`, { method: "PATCH", body: { isActive: false } });
     setPending(false);
     setOpen(false);
     if (!res.ok) return toast(res.error.message, "error");
-    toast(`ซ่อน ${name} จากคลังบริการแล้ว`);
+    toast(`ซ่อน ${name} จากหน้ารวมบริการแล้ว`);
     router.refresh();
   }
 
+  /** ปิด dialog และล้างสถานะว่าติดผู้ใช้ */
   function close() {
     setOpen(false);
     setInUse(null);
@@ -63,7 +66,7 @@ export function ServiceDangerZone({ id, name, isActive }: { id: number; name: st
       <Dialog
         open={open}
         onClose={close}
-        title={inUse ? `ลบ ${name} ไม่ได้` : `ลบ ${name} ออกจากคลัง?`}
+        title={inUse ? `ลบ ${name} ไม่ได้` : `ลบ ${name} ออกจากรวมบริการ?`}
         description={inUse ?? "แพ็กเกจและประวัติราคาทั้งหมดของบริการนี้จะถูกลบด้วย กู้คืนไม่ได้"}
       >
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

@@ -40,7 +40,7 @@ export default async function EditServicePage({ params }: PageProps<"/admin/serv
         <div className="min-w-0">
           <h1 className="truncate text-h2 font-bold">{service.name}</h1>
           <p className="text-text-muted">
-            {service.isActive ? "แสดงในคลังบริการ" : "ซ่อนจากผู้ใช้อยู่"} · อัปเดตข้อมูล{" "}
+            {service.isActive ? "แสดงในหน้ารวมบริการ" : "ซ่อนจากผู้ใช้อยู่"} · อัปเดตข้อมูล{" "}
             {formatThaiDateTime(service.updatedAt)}
           </p>
         </div>

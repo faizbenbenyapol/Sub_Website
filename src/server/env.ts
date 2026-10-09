@@ -14,5 +14,8 @@ function loadEnv() {
 
 export const env = loadEnv();
 
+/** เปิดปุ่มลองบัญชีตัวอย่างหน้า login หรือไม่ */
+export const demoLoginEnabled = Boolean(env.DEMO_LOGIN && env.DEMO_EMAIL);
+
 /** ตั้งค่า Google OAuth ครบทั้งคู่หรือยัง */
 export const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { PasswordField } from "@/components/ui/password-field";
 import { TextField } from "@/components/ui/text-field";
 import { apiFetch } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/safe-next";
@@ -30,11 +31,13 @@ export function AuthForm({
   mode,
   next,
   googleEnabled = false,
+  demoEnabled = false,
   error,
 }: {
   mode: Mode;
   next?: string;
   googleEnabled?: boolean;
+  demoEnabled?: boolean;
   error?: string;
 }) {
   const router = useRouter();
@@ -42,6 +45,19 @@ export function AuthForm({
   const [formError, setFormError] = useState<string | undefined>(error ? GOOGLE_ERRORS[error] : undefined);
   const [pending, setPending] = useState(false);
 
+  /** เข้าบัญชีตัวอย่างทันที (ไม่ต้องกรอกอะไร) */
+  async function tryDemo() {
+    setFormError(undefined);
+    setPending(true);
+    const res = await apiFetch<Me>("/api/auth/demo", { method: "POST" });
+    setPending(false);
+    if (!res.ok) return setFormError(res.error.message);
+    // บัญชีตัวอย่างเป็นผู้ใช้ทั่วไปเสมอ: ถ้ามาจาก ?next=/admin ไปหน้าภาพรวมแทน (ไม่งั้นเจอหน้า 403)
+    router.replace(safeNext(next?.startsWith("/admin") ? undefined : next, res.data.role));
+    router.refresh();
+  }
+
+  /** ส่งฟอร์มล็อกอิน/สมัคร: ตรวจด้วย schema ก่อน แล้วพาไปหน้าที่ตั้งใจจะเข้า */
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormError(undefined);
@@ -109,10 +125,9 @@ export function AuthForm({
         inputMode="email"
         error={errors.email}
       />
-      <TextField
+      <PasswordField
         label="รหัสผ่าน"
         name="password"
-        type="password"
         autoComplete={isLogin ? "current-password" : "new-password"}
         hint={isLogin ? undefined : "อย่างน้อย 8 ตัวอักษร"}
         error={errors.password}
@@ -127,6 +142,23 @@ export function AuthForm({
       <Button type="submit" disabled={pending} className="mt-1 w-full">
         {pending ? "กำลังตรวจสอบ…" : isLogin ? "เข้าสู่ระบบ" : "สมัครและเข้าสู่ระบบ"}
       </Button>
+
+      {isLogin && demoEnabled && (
+        <>
+          <p className="flex items-center gap-3 text-caption text-text-muted" aria-hidden>
+            <span className="h-px flex-1 bg-line" /> หรือ <span className="h-px flex-1 bg-line" />
+          </p>
+          <button
+            type="button"
+            onClick={tryDemo}
+            disabled={pending}
+            className="glass -mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-control border-line-strong font-display font-semibold hover:border-paid disabled:opacity-60"
+          >
+            ลองใช้ด้วยบัญชีตัวอย่าง
+            <span className="text-caption font-normal text-text-muted">ไม่ต้องสมัคร</span>
+          </button>
+        </>
+      )}
 
       <p className="text-center text-text-muted">
         {isLogin ? "ยังไม่มีบัญชี? " : "มีบัญชีแล้ว? "}

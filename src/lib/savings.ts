@@ -30,6 +30,7 @@ export type SavingsSuggestion = {
 
 const MIN_SAVE_SATANG = 100; // ประหยัดไม่ถึง ฿1/เดือน ไม่เสนอ (U-SV2)
 
+/** สตางค์ → ข้อความเงินบาทแบบสั้น (ใช้ในประโยคแนะนำ) */
 const baht = (satang: number) => formatBaht(fromSatang(satang), { short: true });
 
 /**

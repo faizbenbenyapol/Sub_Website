@@ -21,7 +21,7 @@ import { call, makeAdmin, makeCatalog, makeSub, makeUser } from "./helpers";
 
 const id = (n: number) => ({ id: String(n) });
 
-describe("US-B1 / B2 คลังบริการ (public)", () => {
+describe("US-B1 / B2 รวมบริการ (public)", () => {
   it("B1-2 / B1-3 ค้นหาไทย/อังกฤษ และกรองหมวด", async () => {
     const netflix = await makeCatalog({ serviceName: "Netflix" });
     await makeCatalog({ serviceName: "ทรูไอดี" });

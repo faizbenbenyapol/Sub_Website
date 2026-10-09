@@ -18,7 +18,7 @@ export function bangkokDate(daysFromToday = 0): string {
 export async function login(page: Page, account: { email: string; password: string }, next?: string) {
   await page.goto(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
   await page.getByLabel("อีเมล").fill(account.email);
-  await page.getByLabel("รหัสผ่าน").fill(account.password);
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
@@ -32,7 +32,7 @@ export async function registerNewUser(page: Page, name = "ผู้ใช้ท�
   await page.goto("/register");
   await page.getByLabel("ชื่อ").fill(name);
   await page.getByLabel("อีเมล").fill(account.email);
-  await page.getByLabel("รหัสผ่าน").fill(account.password);
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "สมัครและเข้าสู่ระบบ" }).click();
   await expect(page).toHaveURL(/\/dashboard/);
   return account;

@@ -4,6 +4,7 @@ import type { Env } from "../src/server/env-schema";
 export type Status = "ok" | "warn" | "fail" | "info";
 export type Check = { status: Status; title: string; detail?: string; fix?: string };
 
+/** host นี้เป็นเครื่องตัวเองหรือไม่ (ใช้เตือนเมื่อ APP_URL ชี้ localhost บนเซิร์ฟเวอร์จริง) */
 const isLocalHost = (host: string) => ["localhost", "127.0.0.1", "[::1]"].includes(host);
 
 /** ดึงอีเมลจาก "ชื่อ <a@b.c>" หรือ "a@b.c" */
@@ -49,7 +50,7 @@ export function configChecks(env: Env, lanIps: string[] = []): Check[] {
     out.push({
       status: "warn",
       title: "MAIL_TRANSPORT=console: อีเมลพิมพ์ลง log ไม่ได้ส่งจริง",
-      fix: "ตั้ง MAIL_TRANSPORT=smtp + SMTP_USER + SMTP_PASS (Gmail App Password) — README หัวข้ออีเมลแจ้งเตือน",
+      fix: "ตั้ง MAIL_TRANSPORT=smtp + SMTP_USER + SMTP_PASS (Gmail App Password) — docs/06-setup.md หัวข้ออีเมลแจ้งเตือน",
     });
   } else {
     if (env.SMTP_PASS && /\s/.test(env.SMTP_PASS)) {
@@ -77,7 +78,7 @@ export function configChecks(env: Env, lanIps: string[] = []): Check[] {
       : {
           status: "warn",
           title: "CRON_ENABLED=false: อีเมลเตือนรายวันไม่รันเอง",
-          fix: "ตั้ง CRON_ENABLED=true หรือสั่งเองด้วย curl -X POST .../api/cron/reminders (README)",
+          fix: "ตั้ง CRON_ENABLED=true หรือสั่งเองด้วย curl -X POST .../api/cron/reminders (docs/06-setup.md)",
         },
   );
 

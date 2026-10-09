@@ -342,39 +342,48 @@ describe("กฎ 3.3.2 anchor day ไม่ไหลเมื่อแก้ร�
   });
 });
 
-describe("ดาวน์โหลด CSV (P2)", () => {
-  it("ได้เฉพาะรายการของตัวเอง ทั้งใช้งานอยู่และยกเลิกแล้ว · มี BOM · กันสูตร Excel · ไม่ cache", async () => {
-    const { GET: exportCsv } = await import("@/app/api/subscriptions/export/route");
+describe("รายงานสรุปรายเดือน (PDF)", () => {
+  it("นับรอบที่ตัดไปแล้วในเดือนนี้ + รอบที่กำลังจะตัด · ไม่นับรอบก่อนวันที่เพิ่มรายการ · เฉพาะของตัวเองที่ใช้งานอยู่", async () => {
+    const { getMonthReport } = await import("@/server/services/dashboard");
+    // ใช้เดือนในอนาคตไกล ๆ แล้วสมมติว่า "วันนี้" คือวันที่ 20 ของเดือนนั้น — ไม่ขึ้นกับวันที่รันเทส
+    const month = daysFromToday(400).slice(0, 7);
+    const [y, m] = month.split("-").map(Number);
+    const next = `${m === 12 ? y + 1 : y}-${String((m % 12) + 1).padStart(2, "0")}`;
+    const d = (mo: string, day: number) => `${mo}-${String(day).padStart(2, "0")}`;
     const u = await makeUser();
     const other = await makeUser();
     const c = await makeCatalog({ serviceName: "Netflix" });
-    await makeSub(u.id, { planId: c.monthlyPlanId, price: "419.00", note: '=HYPERLINK("http://evil")' });
-    await makeSub(u.id, { categoryId: c.categoryId, customName: "ฟิตเนส, สาขา 2", status: "cancelled" });
-    await makeSub(other.id, { categoryId: c.categoryId, customName: "ของคนอื่น" });
 
-    const r = await call(exportCsv, "/api/subscriptions/export", { as: u });
-    expect(r.status).toBe(200);
-    expect(r.res.headers.get("content-type")).toContain("text/csv");
-    expect(r.res.headers.get("content-disposition")).toMatch(
-      /attachment; filename="tadyang-subscriptions-\d{4}-\d{2}-\d{2}\.csv"/,
-    );
-    expect(r.res.headers.get("cache-control")).toBe("no-store");
-    // ดูไบต์ดิบ: Response.text() ตัด BOM ทิ้งตอนถอดรหัส แต่ไฟล์ที่ดาวน์โหลดต้องมี EF BB BF ให้ Excel อ่านไทยถูก
-    const bytes = new Uint8Array(await r.res.clone().arrayBuffer());
-    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-    const text = await r.res.text();
-    const lines = text.trim().split("\r\n");
-    expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^ชื่อบริการ,แพ็กเกจ,หมวด/);
-    expect(text).toContain("Netflix,รายเดือน");
-    expect(text).toContain('"ฟิตเนส, สาขา 2"');
-    expect(text).toContain("ยกเลิกแล้ว");
-    expect(text).toContain(`"'=HYPERLINK(""http://evil"")"`);
-    expect(text).not.toContain("ของคนอื่น");
-  });
+    await makeSub(u.id, { planId: c.monthlyPlanId, price: "419.00", nextBillingDate: d(next, 5) }); // ตัดไปแล้ววันที่ 5
+    await makeSub(u.id, {
+      categoryId: c.categoryId,
+      customName: "ฟิตเนส",
+      price: "590.00",
+      nextBillingDate: d(month, 25),
+    });
+    await makeSub(u.id, {
+      categoryId: c.categoryId,
+      customName: "เพิ่งเพิ่ม",
+      nextBillingDate: d(next, 10),
+      createdAt: new Date(`${d(month, 15)}T12:00:00+07:00`), // รอบวันที่ 10 อยู่ก่อนวันที่เพิ่ม → ไม่นับ
+    });
+    await makeSub(u.id, {
+      categoryId: c.categoryId,
+      customName: "ยกเลิกแล้ว",
+      status: "cancelled",
+      nextBillingDate: d(month, 26),
+    });
+    await makeSub(other.id, {
+      categoryId: c.categoryId,
+      customName: "ของคนอื่น",
+      nextBillingDate: d(month, 25),
+    });
 
-  it("ไม่ล็อกอิน → 401", async () => {
-    const { GET: exportCsv } = await import("@/app/api/subscriptions/export/route");
-    expect((await call(exportCsv, "/api/subscriptions/export")).status).toBe(401);
+    const { items, charges } = await getMonthReport(u.id, month, d(month, 20));
+    expect(items.map((i) => i.name).sort()).toEqual(["Netflix", "ฟิตเนส", "เพิ่งเพิ่ม"].sort());
+    expect(charges.map((ch) => [ch.date, ch.item.name, ch.paid])).toEqual([
+      [d(month, 5), "Netflix", true],
+      [d(month, 25), "ฟิตเนส", false],
+    ]);
   });
 });

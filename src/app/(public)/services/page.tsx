@@ -6,11 +6,11 @@ import { formatBaht } from "@/lib/money";
 import { listCategories, listServicesPublic } from "@/server/services/catalog";
 
 export const metadata: Metadata = {
-  title: "คลังบริการ",
+  title: "รวมบริการ",
   description: "ราคา subscription ในไทยเป็นเงินบาท พร้อมแพ็กเกจและวิธียกเลิกทีละขั้นตอน",
 };
 
-/** คลังบริการ (US-B1): ค้นหาชื่อ + แท็บหมวด ใช้ query string ล้วน จึงแชร์ลิงก์ผลค้นหาได้และไม่ต้องใช้ JS */
+/** รวมบริการ (US-B1): ค้นหาชื่อ + แท็บหมวด ใช้ query string ล้วน จึงแชร์ลิงก์ผลค้นหาได้และไม่ต้องใช้ JS */
 export default async function ServicesPage({ searchParams }: PageProps<"/services">) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -32,8 +32,8 @@ export default async function ServicesPage({ searchParams }: PageProps<"/service
   return (
     <>
       <PublicHeader />
-      <main className="mx-auto max-w-[1120px] px-4 pt-6 pb-16 md:px-8 md:pt-10">
-        <h1 className="text-h2 font-bold md:text-h1">คลังบริการ</h1>
+      <main className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 md:px-8 md:pt-10 lg:pb-16">
+        <h1 className="text-h2 font-bold md:text-h1">รวมบริการ</h1>
         <p className="mt-2 max-w-[40rem] text-text-muted">
           ราคาเป็นเงินบาทจากเว็บไซต์ของแต่ละบริการ พร้อมวิธียกเลิกทีละขั้นตอน
         </p>

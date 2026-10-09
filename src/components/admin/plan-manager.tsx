@@ -41,6 +41,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
     return true;
   }
 
+  /** บันทึกแพ็กเกจ (เพิ่มหรือแก้ราคา — แก้ราคาแล้วระบบเก็บประวัติให้เอง) */
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -66,6 +67,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
     if (ok) setEditing(null);
   }
 
+  /** สลับแสดง/ซ่อนแพ็กเกจจากผู้ใช้ */
   async function toggleActive(plan: PlanDto) {
     await send(
       `/api/admin/plans/${plan.id}`,
@@ -75,6 +77,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
     );
   }
 
+  /** ลบแพ็กเกจ — ถ้ามีผู้ใช้ผูกอยู่ server ตอบ 409 แนะนำให้ซ่อนแทน */
   async function remove() {
     if (!deleting) return;
     const plan = deleting;
@@ -100,7 +103,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
       </div>
 
       <div className="glass relative mt-4 overflow-x-auto rounded-card">
-        <table className="w-full min-w-[600px] text-left">
+        <table className="stack-table w-full min-w-[600px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">
               <th scope="col" className="px-5 py-3 font-medium">
@@ -130,13 +133,19 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
                 className={`border-b border-line last:border-0 ${p.isActive ? "" : "text-text-muted"}`}
               >
                 <td className="px-5 py-3 font-medium">{p.name}</td>
-                <td className="figure px-5 py-3 text-right">{formatBaht(p.price)}</td>
-                <td className="px-5 py-3">{CYCLE[p.billingCycle]}</td>
-                <td className="figure px-5 py-3 text-right">
+                <td data-label="ราคา" className="figure px-5 py-3 text-right">
+                  {formatBaht(p.price)}
+                </td>
+                <td data-label="รอบบิล" className="px-5 py-3">
+                  {CYCLE[p.billingCycle]}
+                </td>
+                <td data-label="ใช้ได้" className="figure px-5 py-3 text-right">
                   {p.maxMembers}
                   <span className="font-sans text-caption text-text-muted"> คน</span>
                 </td>
-                <td className="px-5 py-3 text-caption">{p.isActive ? "แสดงอยู่" : "ซ่อนอยู่"}</td>
+                <td data-label="สถานะ" className="px-5 py-3 text-caption">
+                  {p.isActive ? "แสดงอยู่" : "ซ่อนอยู่"}
+                </td>
                 <td className="px-5 py-2 text-right whitespace-nowrap">
                   <button
                     onClick={() => {
@@ -168,7 +177,7 @@ export function PlanManager({ serviceId, plans }: { serviceId: number; plans: Pl
         </table>
         {plans.length === 0 && (
           <p className="px-5 py-8 text-text-muted">
-            ยังไม่มีแพ็กเกจ — ผู้ใช้จะเพิ่มบริการนี้จากคลังไม่ได้จนกว่าจะมีอย่างน้อย 1 แพ็กเกจ
+            ยังไม่มีแพ็กเกจ — ผู้ใช้จะเพิ่มบริการนี้จากรวมบริการไม่ได้จนกว่าจะมีอย่างน้อย 1 แพ็กเกจ
           </p>
         )}
       </div>

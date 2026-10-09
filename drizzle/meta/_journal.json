@@ -22,6 +22,27 @@
       "when": 1791463520594,
       "tag": "0002_complex_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1791530844599,
+      "tag": "0003_orange_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1791531889527,
+      "tag": "0004_fine_mindworm",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1791533053889,
+      "tag": "0005_overjoyed_dragon_man",
+      "breakpoints": true
     }
   ]
 }

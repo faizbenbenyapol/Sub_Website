@@ -68,6 +68,9 @@
 @layer base {
   html {
     background: var(--night);
+    /* จองที่ของแถบเลื่อนไว้ตลอด — หน้าสั้น/ยาวสลับกันแล้วเนื้อหาไม่กระตุกไปซ้ายขวา */
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--line-strong) transparent;
   }
 
   /* พื้นหลังเรืองแสง 3 จุด อยู่ที่ body เท่านั้นและไม่ขยับ */
@@ -103,6 +106,124 @@
   a {
     color: inherit;
   }
+
+  /* ดรอปดาวน์ทั้งเว็บ — สีพื้น/ขอบ/ความสูงมาจาก utility ที่จุดใช้งาน ส่วนนี้คุมลูกศรกับรายการตัวเลือก
+     ห้ามใส่ px-* ที่ <select> เพราะจะทับระยะที่เว้นให้ลูกศร */
+  select {
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a6a6b0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    appearance: none;
+    padding-inline: 1rem 2.75rem;
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    cursor: pointer;
+  }
+
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* browser ที่ยังเปิดรายการแบบ native: พื้นต้องทึบ ไม่งั้นได้พื้นขาว + ตัวอักษรขาวอ่านไม่ออก */
+  option {
+    background-color: var(--glass-fallback);
+    color: var(--text);
+  }
+
+  option:disabled {
+    color: var(--text-faint);
+  }
+
+  /* Chromium 135+: เปิดรายการเป็นแผงแก้วทึบของเราเอง (customizable select) */
+  @supports (appearance: base-select) {
+    select,
+    ::picker(select) {
+      appearance: base-select;
+    }
+
+    select {
+      align-items: center;
+      padding-inline: 1rem;
+      background-image: none;
+    }
+
+    select::picker-icon {
+      content: "";
+      width: 1rem;
+      height: 1rem;
+      margin-inline-start: auto;
+      background: var(--chevron) center / contain no-repeat;
+      transition: rotate 0.2s ease;
+    }
+
+    select:open::picker-icon {
+      rotate: 180deg;
+    }
+
+    ::picker(select) {
+      margin-block: 6px;
+      padding: 6px;
+      max-height: min(20rem, 60dvh);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-control);
+      background: var(--glass-fallback);
+      color: var(--text);
+      box-shadow: 0 18px 48px rgb(0 0 0 / 0.55);
+      opacity: 0;
+      translate: 0 -4px;
+      transition:
+        opacity 0.15s ease,
+        translate 0.15s ease,
+        overlay 0.15s allow-discrete,
+        display 0.15s allow-discrete;
+    }
+
+    select:open::picker(select) {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    @starting-style {
+      select:open::picker(select) {
+        opacity: 0;
+        translate: 0 -4px;
+      }
+    }
+
+    option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 44px;
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    option:hover,
+    option:focus-visible {
+      background: var(--glass-strong);
+      outline: none;
+    }
+
+    option:checked {
+      color: var(--paid);
+      font-weight: 600;
+    }
+
+    option::checkmark {
+      order: 1;
+      margin-inline-start: auto;
+      color: var(--paid);
+    }
+
+    option:disabled {
+      cursor: default;
+      background: transparent;
+    }
+  }
 }
 
 @layer components {
@@ -129,6 +250,80 @@
   .figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * ตารางหลังบ้านบนจอแคบ (< 768px): แต่ละแถวกลายเป็นการ์ด แต่ละช่องขึ้นบรรทัดใหม่พร้อมชื่อคอลัมน์จาก data-label
+ * ไม่ต้องเลื่อนตารางไปทางขวาเพื่อหาปุ่มจัดการ · อยู่นอก @layer เพื่อชนะ min-w-* / text-right ที่ใส่ไว้สำหรับจอกว้าง
+ */
+@media (max-width: 767px) {
+  .stack-table {
+    min-width: 0;
+  }
+  .stack-table thead {
+    display: none;
+  }
+  .stack-table tbody,
+  .stack-table tr,
+  .stack-table td {
+    display: block;
+    width: 100%;
+  }
+  .stack-table tr {
+    padding: 0.75rem 1rem;
+  }
+  .stack-table td {
+    padding: 0.125rem 0;
+    text-align: left;
+  }
+  .stack-table td:first-child {
+    padding-bottom: 0.375rem;
+  }
+  /* ชื่อคอลัมน์อยู่ในคอลัมน์ซ้ายกว้างคงที่ ค่าทุกบรรทัด (รวมบรรทัดรอง) เริ่มที่แนวเดียวกัน */
+  .stack-table td[data-label] {
+    position: relative;
+    padding-left: 6rem;
+  }
+  .stack-table td[data-label]::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 5.5rem;
+    color: var(--text-faint);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 400;
+  }
+  /* ช่องปุ่มจัดการ: ปุ่มชิดซ้าย ห่อบรรทัดได้ */
+  .stack-table td:last-child:not([data-label]) {
+    margin-left: -0.75rem;
+    white-space: normal;
+  }
+}
+
+/* พิมพ์/บันทึก PDF (รายงานสรุปเดือนที่ /report): กระดาษขาว A4 ไม่มีพื้นมืดหรือแสงเรือง, เลขหน้ามุมขวาล่าง */
+@page {
+  size: A4;
+  margin: 12mm 12mm 14mm;
+
+  @bottom-right {
+    content: "หน้า " counter(page) " / " counter(pages);
+    font-size: 9pt;
+    color: #8a8a96;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  /* ให้สีพื้นของบล็อกในรายงาน (บล็อกน้ำเงิน, ป้ายสถานะ) ติดไปใน PDF ด้วย */
+  .report-paper,
+  .report-paper * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
 

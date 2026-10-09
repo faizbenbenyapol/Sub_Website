@@ -43,7 +43,7 @@ test("S3 เพิ่มบริการ+แพ็กเกจ → แก้�
   await page.getByRole("dialog").getByRole("button", { name: "ลบบริการ" }).click();
   await expect(page.getByRole("dialog")).toContainText("ลบ Microsoft 365 ไม่ได้");
   await page.getByRole("dialog").getByRole("button", { name: "ซ่อนบริการแทน" }).click();
-  await expect(page.getByText("ซ่อน Microsoft 365 จากคลังบริการแล้ว")).toBeVisible();
+  await expect(page.getByText("ซ่อน Microsoft 365 จากหน้ารวมบริการแล้ว")).toBeVisible();
 
   const res = await page.goto("/services/microsoft-365");
   expect(res?.status()).toBe(404);

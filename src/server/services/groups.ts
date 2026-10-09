@@ -55,10 +55,13 @@ export type GroupDetailDto = GroupSummaryDto & {
 /** db หรือ tx ของทรานแซกชัน — ฟังก์ชันที่ต้องทำงานได้ทั้งสองแบบรับตัวนี้ */
 export type Executor = Pick<typeof db, "select" | "update" | "insert" | "delete">;
 
+/** error เมื่อไม่พบกลุ่มหรือไม่ใช่เจ้าของกลุ่ม (ตอบ 404 เหมือนกันไม่เผยว่ามีกลุ่มอยู่) */
 const notFound = () => new ApiError(404, "NOT_FOUND", "ไม่พบกลุ่มนี้");
+/** token สุ่มของลิงก์จ่ายเงินแต่ละคน (เดาไม่ได้ ใช้เปิดหน้าจ่ายโดยไม่ต้องล็อกอิน) */
 const newToken = () => randomBytes(32).toString("base64url"); // 43 ตัวอักษร เดาไม่ได้
 const DAY_MS = 24 * 60 * 60 * 1000;
 const REMINDERS_PER_OWNER_DAY = 20;
+/** รอบเก็บเงินปัจจุบัน = เดือนปฏิทินตามเวลาไทย "YYYY-MM" */
 export const currentPeriod = () => todayInBangkok().slice(0, 7);
 
 /** กลุ่มของเจ้าของพร้อมรายการที่หาร — ไม่ใช่ของตัวเองโยน 404 */

@@ -12,12 +12,14 @@ export function NotificationList({ items, unreadCount }: { items: NotificationDt
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
+  /** กดแจ้งเตือน: ทำเครื่องหมายว่าอ่านแล้ว แล้วพาไปหน้าที่เกี่ยวข้อง */
   async function open(n: NotificationDto) {
     if (!n.readAt) await apiFetch(`/api/notifications/${n.id}/read`, { method: "POST" });
     if (n.link) router.push(n.link);
     router.refresh();
   }
 
+  /** ทำเครื่องหมายว่าอ่านทุกรายการ */
   async function readAll() {
     setPending(true);
     await apiFetch("/api/notifications/read-all", { method: "POST" });

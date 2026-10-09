@@ -7,9 +7,10 @@ import {
 } from "react";
 
 // ช่องกรอกแบบอื่นนอกจาก TextField — กฎเดียวกัน: label อยู่บน, error ใต้ช่อง, ผูกด้วย aria-describedby
+// padding แนวนอนใส่แยกแต่ละช่อง — <select> ไม่ใส่ เพราะ globals.css จัดเว้นที่ให้ลูกศรเอง
 
 const controlClass = (error?: string) =>
-  `rounded-control border bg-glass-strong px-4 text-body text-text ${
+  `rounded-control border bg-glass-strong text-body text-text ${
     error ? "border-danger" : "border-line-strong focus:border-paid"
   } focus:outline-none focus-visible:outline-2 focus-visible:outline-paid`;
 
@@ -87,7 +88,7 @@ export function TextareaField({
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error || hint ? `${id}-message` : undefined}
-        className={`min-h-32 py-3 ${controlClass(error)}`}
+        className={`min-h-32 px-4 py-3 ${controlClass(error)}`}
         {...props}
       />
     </FieldFrame>
@@ -118,7 +119,7 @@ export function MoneyField({
           inputMode="decimal"
           aria-invalid={error ? true : undefined}
           aria-describedby={error || hint ? `${id}-message` : undefined}
-          className={`figure h-12 w-full pl-9 ${controlClass(error)}`}
+          className={`figure h-12 w-full pr-4 pl-9 ${controlClass(error)}`}
           {...props}
         />
       </div>

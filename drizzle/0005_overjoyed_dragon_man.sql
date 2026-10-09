@@ -1,0 +1,1 @@
+ALTER TABLE `feedback` MODIFY COLUMN `status` enum('new','read','acknowledged','in_progress','resolved') NOT NULL DEFAULT 'new';

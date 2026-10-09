@@ -29,6 +29,7 @@ export function ServiceForm({ categories, initial }: { categories: CategoryDto[]
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
 
+  /** บันทึกบริการ (เพิ่มหรือแก้) แล้วไปหน้าจัดการแพ็กเกจของบริการนั้น */
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -116,7 +117,7 @@ export function ServiceForm({ categories, initial }: { categories: CategoryDto[]
       />
       <div className="md:col-span-2">
         <CheckboxField
-          label="แสดงในคลังบริการ"
+          label="แสดงในหน้ารวมบริการ"
           description="ปิดเพื่อซ่อนจากผู้ใช้ — รายการที่ผู้ใช้เพิ่มไว้แล้วยังอยู่ครบ"
           name="isActive"
           defaultChecked={initial?.isActive ?? true}

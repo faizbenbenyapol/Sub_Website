@@ -14,7 +14,7 @@ import { listSubscriptions } from "./subscriptions";
 
 export type NotificationDto = {
   id: number;
-  type: "billing_reminder" | "trial_ending" | "member_reminder" | "test";
+  type: "billing_reminder" | "trial_ending" | "member_reminder" | "test" | "feedback_reply";
   title: string;
   body: string;
   link: string | null;

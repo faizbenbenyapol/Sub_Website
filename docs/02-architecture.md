@@ -117,6 +117,7 @@ erDiagram
     user_subscriptions ||--o| share_groups : "shared via"
     share_groups ||--o{ group_members : has
     group_members ||--o{ member_payments : "pays per month"
+    users ||--o{ feedback : "sends"
 
     users {
         int id PK
@@ -208,6 +209,16 @@ erDiagram
         enum status "unpaid|paid"
         datetime paid_at
     }
+    feedback {
+        int id PK
+        int user_id FK
+        enum kind "bug | suggestion | other"
+        text message
+        enum status "new | read | acknowledged | in_progress | resolved"
+        text reply "คำตอบจาก admin"
+        datetime replied_at
+        datetime created_at
+    }
 ```
 
 ### 3.2 รายละเอียดตาราง
@@ -222,10 +233,11 @@ erDiagram
 | `plans` | `name VARCHAR(100)`, `price DECIMAL(10,2)`, `billing_cycle ENUM('monthly','yearly')`, `max_members TINYINT DEFAULT 1` (>1 = Family plan), `is_active BOOL DEFAULT 1` | `service_id` CASCADE |
 | `price_history` | `old_price`, `new_price`, `changed_by INT NULL`, `changed_at` (ไม่มี updated_at) · index `(plan_id, changed_at)` · **เขียนในทรานแซกชันเดียวกับการแก้ราคา** | `plan_id` CASCADE, `changed_by` SET NULL |
 | `user_subscriptions` | `plan_id NULL` (null = custom), `custom_name VARCHAR(100) NULL`, `custom_category_id NULL`, `price`, `billing_cycle`, `next_billing_date DATE`, `billing_anchor_day TINYINT` (1–31), `trial_ends_at DATE NULL`, `payment_method VARCHAR(100) NULL`, `note VARCHAR(500) NULL`, `status ENUM('active','cancelled') DEFAULT 'active'`, `cancelled_at DATETIME NULL` · index `(user_id, status)`, `(status, next_billing_date)` · กฎ: มี `plan_id` **หรือ** (`custom_name` + `custom_category_id`) อย่างใดอย่างหนึ่ง (บังคับใน zod) | `user_id` CASCADE, `plan_id` RESTRICT, `custom_category_id` RESTRICT |
-| `notifications` | `type ENUM('billing_reminder','trial_ending','member_reminder','test')`, `channel ENUM('email','in_app')`, `title VARCHAR(200)`, `body VARCHAR(1000)`, `link VARCHAR(300) NULL`, `due_date DATE NULL`, `status ENUM('pending','sent','failed')`, `attempts TINYINT DEFAULT 0`, `read_at DATETIME NULL` · **`UNIQUE (user_subscription_id, type, due_date, channel)` = กันส่งซ้ำ** (แถว test มี due_date NULL จึงไม่ติด) · index `(user_id, channel, read_at)` | `user_id` CASCADE, `user_subscription_id` SET NULL (ประวัติ/สถิติอีเมลไม่หายเมื่อผู้ใช้ลบรายการ) |
+| `notifications` | `type ENUM('billing_reminder','trial_ending','member_reminder','test','feedback_reply')`, `channel ENUM('email','in_app')`, `title VARCHAR(200)`, `body VARCHAR(1000)`, `link VARCHAR(300) NULL`, `due_date DATE NULL`, `status ENUM('pending','sent','failed')`, `attempts TINYINT DEFAULT 0`, `read_at DATETIME NULL` · **`UNIQUE (user_subscription_id, type, due_date, channel)` = กันส่งซ้ำ** (แถว test มี due_date NULL จึงไม่ติด) · index `(user_id, channel, read_at)` | `user_id` CASCADE, `user_subscription_id` SET NULL (ประวัติ/สถิติอีเมลไม่หายเมื่อผู้ใช้ลบรายการ) |
 | `share_groups` *(P1)* | `user_subscription_id UNIQUE` (1 รายการ = 1 กลุ่ม), `promptpay_id VARCHAR(20)` (เบอร์ 10 หลัก / บัตร ปชช. 13 หลัก), `split_mode ENUM('equal','custom')` | `owner_id` CASCADE, `user_subscription_id` CASCADE |
 | `group_members` *(P1)* | `name VARCHAR(100)`, `email VARCHAR(191) NULL`, `amount DECIMAL(10,2)`, `pay_token CHAR(43) UNIQUE` (32 byte สุ่ม base64url) | `group_id` CASCADE |
 | `member_payments` *(P1)* | `period CHAR(7)` เช่น `2026-10`, `status ENUM('unpaid','paid')`, `paid_at`, `reminded_at` · `UNIQUE (member_id, period)` · **ไม่มีแถว = ยังไม่จ่าย** (สร้างแถวตอนกดเปลี่ยนสถานะ) | `member_id` CASCADE |
+| `feedback` | `kind ENUM('bug','suggestion','other')`, `message TEXT` (10–2,000 ตัวอักษร), `status ENUM('new','read','acknowledged','in_progress','resolved')` default `new` (3 ขั้นท้าย = แถบความคืบหน้าที่ผู้ใช้เห็น · `read` = อ่าน/ตอบแล้วไม่ต้องติดตาม เช่น คำชม), `reply TEXT NULL` + `replied_at` (คำตอบจาก admin) · index `(status, created_at)`, `(user_id, created_at)` | `user_id` CASCADE |
 
 **ต่างจาก `docs/01` §5 หนึ่งจุด:** PromptPay ID เก็บที่ `share_groups` ไม่ใช่ `users` — ใช้แค่ตอนหาร และเก็บเฉพาะเมื่อผู้ใช้สร้างกลุ่ม (เก็บข้อมูลส่วนตัวให้น้อยที่สุด) ฟอร์มสร้างกลุ่มใหม่ prefill จากกลุ่มล่าสุดของผู้ใช้ได้
 
@@ -316,7 +328,7 @@ type Subscription = {
   groupId: number | null;
 };
 
-type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "member_reminder" | "test";
+type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "member_reminder" | "test" | "feedback_reply";
                       title: string; body: string; link: string | null; readAt: string | null; createdAt: string };
 ```
 
@@ -326,6 +338,7 @@ type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "m
 |---|---|---|---|---|
 | 🌐 | `POST /api/auth/register` | `{ name, email, password }` | `201 { data: User }` + cookie | 400, 409 `EMAIL_TAKEN` |
 | 🌐 | `POST /api/auth/login` | `{ email, password }` | `200 { data: User }` + cookie | 400, 401 `INVALID_CREDENTIALS`, 403 `ACCOUNT_SUSPENDED`, 429 |
+| 🌐 | `POST /api/auth/demo` | — | `200 { data: User }` + cookie ของบัญชี `DEMO_EMAIL` (เปิดเมื่อ `DEMO_LOGIN=true`, role user เท่านั้น) | 404 ปิดอยู่/ไม่มีบัญชี, 429 |
 | 👤 | `POST /api/auth/logout` | — | `204` ลบ cookie | — |
 | 👤 | `GET /api/auth/me` | — | `{ data: User }` | 401 |
 
@@ -344,7 +357,7 @@ type Notification = { id: number; type: "billing_reminder" | "trial_ending" | "m
 |---|---|---|---|---|
 | 👤 | `GET /api/subscriptions` | query `status=active\|cancelled\|all` (default `active`) | `{ data: Subscription[] }` เรียง nextBillingDate | — |
 | 👤 | `POST /api/subscriptions` | ดูด้านล่าง | `201 { data: Subscription }` | 400, 404 plan |
-| 👤 | `GET /api/subscriptions/export` *(P2)* | — | `text/csv` UTF-8 + BOM แนบไฟล์ รวมทุกสถานะ · ข้อความขึ้นต้น `= + - @` ใส่ `'` นำหน้ากันสูตร Excel · `no-store` | 401 |
+| 👤 | หน้า `/report?month=YYYY-MM` *(P2, แทน CSV)* | — | รายงานสรุปเดือน A4 ให้เบราว์เซอร์บันทึกเป็น PDF (`print=1` เปิดหน้าต่างพิมพ์ให้) · ไม่ย้อนก่อนเดือนนี้ | redirect ไป /login |
 | 👤 | `GET /api/subscriptions/:id` | — | `{ data: Subscription }` | 404 |
 | 👤 | `PATCH /api/subscriptions/:id` | ฟิลด์ใดก็ได้จากตอนสร้าง + `status: "active"\|"cancelled"` | `{ data: Subscription }` | 400, 404 |
 | 👤 | `DELETE /api/subscriptions/:id` | — | `204` (ลบกลุ่มหารที่ผูกไว้ด้วย — UI ต้องยืนยันก่อน) | 404 |
@@ -392,6 +405,19 @@ type UpcomingItem = { subscriptionId: number; name: string; logoUrl: string | nu
 | 🔑 | `POST /api/cron/reminders` | — | `{ data: { rolled, sent, skipped, failed } }` | 401 |
 
 **อีเมลทดสอบ (US-E4):** ส่งสรุปรายการที่จะตัดเงิน/หมดทดลองใน 30 วันข้างหน้าของผู้ใช้คนนั้นทันที ไม่สนการตั้งค่าล่วงหน้า บันทึกเป็น `type = 'test'` (ไม่กระทบตัวกันส่งซ้ำ) ถ้าไม่มีรายการเลยก็ยังส่ง พร้อมข้อความ "ยังไม่มีรายการที่จะตัดเงินใน 30 วัน"
+
+**เปลี่ยนรหัสผ่าน** (หน้าตั้งค่า: ยืนยันรหัสเดิมก่อน ช่องรหัสใหม่จึงกรอกได้)
+
+| | Method + Path | Body | Response | Error |
+|---|---|---|---|---|
+| 👤 | `POST /api/me/password/verify` | `{ currentPassword }` | `200 { data: { verified: true } }` | 400 `fields.currentPassword`, 429 (ผิด 5 ครั้ง/15 นาที/บัญชี — นับร่วมกับข้อล่าง) |
+| 👤 | `PATCH /api/me/password` | `{ currentPassword?, newPassword, confirmPassword }` (`currentPassword` ไม่ต้องส่งถ้าบัญชีเข้าด้วย Google อย่างเดียว) | `200` + cookie ใหม่ · เพิ่ม `session_version` = เครื่องอื่นหลุด | 400 (รหัสเดิมผิด / ใหม่ < 8 ตัว / สองช่องไม่ตรง / ซ้ำของเดิม), 429 |
+
+**แจ้งปัญหา / คำแนะนำ** (ฟอร์มในหน้าตั้งค่า → หลังบ้าน `/admin/feedback`)
+
+| | Method + Path | Body | Response | Error |
+|---|---|---|---|---|
+| 👤 | `POST /api/feedback` | `{ kind: "bug"\|"suggestion"\|"other", message }` | `201 { data: { id, kind, message, status, createdAt } }` | 400, 429 (เกิน 5 ครั้ง/ชั่วโมง/บัญชี) |
 
 ### 5.8 ตัวช่วยประหยัด *(P1)*
 
@@ -455,7 +481,10 @@ type GroupDetail = GroupSummary & {
 | `PATCH /api/admin/plans/:id` | ฟิลด์ใดก็ได้ — ถ้า `price` เปลี่ยน เขียน `price_history` ในทรานแซกชันเดียวกัน | `{ data: Plan }` | 400, 404 |
 | `DELETE /api/admin/plans/:id` | — | `204` | 404, 409 `IN_USE` |
 | `GET /api/admin/users` | `q?`, `page?` | `{ data: { id, name, email, role, status, loginMethods, createdAt }[], meta }` | — |
-| `PATCH /api/admin/users/:id` | `{ status: "active"\|"suspended" }` | `{ data: … }` | 400 ระงับตัวเอง/admin, 404 |
+| `PATCH /api/admin/users/:id` | `{ status: "active"\|"suspended" }` **หรือ** `{ role: "user"\|"admin" }` (ทีละอย่าง) | `{ data: … }` · เปลี่ยน role = เพิ่ม `session_version` ของคนนั้น (role อยู่ใน token ต้องล็อกอินใหม่) | 400 ระงับตัวเอง/admin, เปลี่ยน role ตัวเอง, ตั้งบัญชีที่ถูกระงับเป็น admin · 404 |
+| `DELETE /api/admin/users/:id` | — | `204` · ข้อมูลของบัญชีหายตาม FK CASCADE | 400 ลบตัวเอง/admin (ถอดสิทธิ์ก่อน) · 404 |
+| `GET /api/admin/feedback` | `status?` คั่นด้วย `,` ได้ เช่น `acknowledged,in_progress`, `page?` | `{ data: { id, kind, message, status, reply, repliedAt, createdAt, user: { id, name, email } }[], meta }` | — |
+| `PATCH /api/admin/feedback/:id` | `{ status?: "new"\|"read"\|"acknowledged"\|"in_progress"\|"resolved", reply?: string }` (อย่างน้อยหนึ่งช่อง) | `{ data: Feedback }` · มี `reply` = สถานะ "ใหม่" เลื่อนเป็น "อ่านแล้ว" · ตอบ หรือขยับไปขั้นใหม่ = สร้างแจ้งเตือน `feedback_reply` ที่กระดิ่งของผู้ส่ง 1 รายการ | 400, 404 |
 | `GET /api/admin/dashboard` | — | ดูด้านล่าง | — |
 
 ```ts

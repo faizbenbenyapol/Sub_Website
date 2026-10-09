@@ -33,14 +33,13 @@ export default async function SubscriptionsPage({ searchParams }: PageProps<"/su
           >
             หารค่าบริการกับเพื่อน
           </Link>
-          {/* ลิงก์ธรรมดา: route ตอบเป็นไฟล์แนบ เบราว์เซอร์ดาวน์โหลดเอง (รวมแท็บยกเลิกแล้วด้วย) */}
-          <a
-            href="/api/subscriptions/export"
-            download
+          {/* เปิดรายงานสรุปเดือนนี้ แล้วเด้งหน้าต่างพิมพ์ให้บันทึกเป็น PDF (print=1) */}
+          <Link
+            href={`/report?month=${today.slice(0, 7)}&print=1`}
             className="min-h-11 content-center font-medium text-link underline underline-offset-4"
           >
-            ดาวน์โหลด CSV
-          </a>
+            ดาวน์โหลดสรุปเดือนนี้ (PDF)
+          </Link>
         </div>
       </div>
 
@@ -79,7 +78,7 @@ export default async function SubscriptionsPage({ searchParams }: PageProps<"/su
   );
 }
 
-/** หนึ่งแถว: โลโก้ · ชื่อ+แพ็กเกจ · วันตัดเงิน · ราคา (ชิดขวา mono) — มือถือยุบเป็นสองบรรทัด */
+/** หนึ่งแถว: โลโก้ · ชื่อ+แพ็กเกจ · วันตัดเงิน · ราคา (ชิดขวา mono) — มือถือชื่อกับแพ็กเกจแยกบรรทัด ไม่ตัดชื่อ */
 function Row({ item: s, today }: { item: SubscriptionDto; today: string }) {
   const days = daysBetween(today, s.nextBillingDate);
   const soon = s.status === "active" && days <= 3;
@@ -93,10 +92,14 @@ function Row({ item: s, today }: { item: SubscriptionDto; today: string }) {
     >
       <ServiceLogo name={s.name} logoUrl={s.logoUrl} />
       <div className="min-w-0">
-        <p className="truncate font-display text-lead font-semibold" title={s.name}>
+        {/* ชื่อยาวขึ้นบรรทัดใหม่แทนการตัดเป็น "…" · มือถือแพ็กเกจอยู่บรรทัดของตัวเอง */}
+        <p className="font-display text-lead leading-snug font-semibold break-words">
           {s.name}
           {s.plan && (
-            <span className="font-sans text-body font-normal text-text-muted"> · {s.plan.name}</span>
+            <span className="block font-sans text-caption font-normal text-text-muted sm:inline sm:text-body">
+              <span className="hidden sm:inline"> · </span>
+              {s.plan.name}
+            </span>
           )}
         </p>
         <p className="flex flex-wrap gap-x-3 text-caption text-text-muted">
@@ -111,7 +114,9 @@ function Row({ item: s, today }: { item: SubscriptionDto; today: string }) {
             <span className="whitespace-nowrap text-due">ทดลองใช้ถึง {formatThaiDate(s.trialEndsAt!)}</span>
           )}
           {s.paymentMethod && <span>{s.paymentMethod}</span>}
-          {catalogChanged && <span>ราคาในคลังตอนนี้ {formatBaht(s.catalogPrice!, { short: true })}</span>}
+          {catalogChanged && (
+            <span>ราคาปัจจุบันของบริการ {formatBaht(s.catalogPrice!, { short: true })}</span>
+          )}
         </p>
       </div>
       <p className="text-right">

@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarList } from "@/components/charts/bar-list";
+import { DonutChart, type DonutDatum } from "@/components/charts/donut-chart";
 import { ChargeStub } from "@/components/charge-stub";
 import { todayInBangkok } from "@/lib/dates";
 import { formatBaht } from "@/lib/money";
 import { sumBilling } from "@/lib/schedule";
 import { getCurrentUser } from "@/server/auth";
+import { listCategories, type CategoryDto } from "@/server/services/catalog";
 import { getDashboard, UPCOMING_DAYS } from "@/server/services/dashboard";
 import { getSavings } from "@/server/services/savings";
 
 export const metadata: Metadata = { title: "ภาพรวม" };
+
+// สีของหมวดตามลำดับหมวด (sortOrder) — สีติดหมวด ไม่ติดอันดับยอด · ผ่าน validate_palette ของ dataviz บนพื้น --night
+// (ทั้งคู่ติดกันรอบวงรวมคู่ท้าย↔หัว) · หมวดที่ 7 เป็นต้นไปรวมเป็นชิ้นสีเทาชิ้นเดียว ไม่สร้างสีใหม่
+const CATEGORY_COLORS = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300"];
+const OVERFLOW_COLOR = "#5c5c66";
 
 const QUICK_ADD = [
   { slug: "netflix", name: "Netflix" },
@@ -21,15 +27,16 @@ const QUICK_ADD = [
 
 /**
  * Dashboard ผู้ใช้ (US-D1) — ตัวเลขที่ตอบคำถามหลักมีตัวเดียว: ยอดต่อเดือน (บล็อก slip ทึบ บล็อกเดียวของหน้า)
- * ตามด้วยสลิปรายการที่จะตัดเงินใน 7 วัน และแท่งสัดส่วนตามหมวด (docs/03 ข้อ 6)
+ * ตามด้วยสลิปรายการที่จะตัดเงินใน 7 วัน และวงกลมสัดส่วนตามหมวด (docs/03 ข้อ 6)
  */
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const today = todayInBangkok();
-  const [{ totals, byCategory, upcoming }, savings] = await Promise.all([
+  const [{ totals, byCategory, upcoming }, savings, categories] = await Promise.all([
     getDashboard(user.id, today),
     getSavings(user.id),
+    listCategories(),
   ]);
 
   if (totals.activeCount === 0) return <EmptyDashboard name={user.name} />;
@@ -62,10 +69,12 @@ export default async function DashboardPage() {
               แยกตามหมวด
             </h2>
             <p className="mt-1 text-caption text-text-muted">ต่อเดือน (รายปีหาร 12 แล้ว)</p>
-            <div className="mt-4">
-              <BarList
+            <div className="mt-5">
+              <DonutChart
                 label="ค่าใช้จ่ายต่อเดือนแยกตามหมวด"
-                data={byCategory.map((c) => ({ label: c.name, value: c.monthly }))}
+                data={categorySlices(byCategory, categories)}
+                centerValue={formatBaht(Math.round(totals.monthly), { short: true })} // ปัดเต็มบาทให้พอดีวง ยอดละเอียดอยู่บล็อกบน
+                centerLabel="ต่อเดือน"
               />
             </div>
           </section>
@@ -75,7 +84,9 @@ export default async function DashboardPage() {
               <h2 id="savings-heading" className="text-h3 font-bold">
                 ประหยัดได้
               </h2>
-              <p className="mt-1 text-caption text-text-muted">คิดจากแพ็กเกจในคลังของบริการเดียวกัน</p>
+              <p className="mt-1 text-caption text-text-muted">
+                คิดจากแพ็กเกจอื่นของบริการเดียวกันในรวมบริการ
+              </p>
               <ul className="mt-4 flex flex-col gap-3">
                 {savings.slice(0, 3).map((s) => (
                   <li
@@ -139,6 +150,27 @@ export default async function DashboardPage() {
       </div>
     </main>
   );
+}
+
+/** ยอดต่อหมวด → ชิ้นของวงกลม เรียงตามลำดับหมวด ใส่สีตามตำแหน่งหมวด (เกิน 6 หมวดรวมเป็น "หมวดอื่น") */
+function categorySlices(
+  byCategory: { categoryId: number; name: string; monthly: number }[],
+  categories: CategoryDto[],
+): DonutDatum[] {
+  const position = new Map(categories.map((c, i) => [c.id, i]));
+  /** ลำดับของหมวดใน sortOrder (หมวดที่ไม่รู้จักไปท้ายสุด) */
+  const at = (id: number) => position.get(id) ?? categories.length;
+  const sorted = byCategory.filter((c) => c.monthly > 0).sort((a, b) => at(a.categoryId) - at(b.categoryId));
+  const slices: DonutDatum[] = [];
+  let overflow = 0;
+  for (const c of sorted) {
+    const i = at(c.categoryId);
+    if (i < CATEGORY_COLORS.length) {
+      slices.push({ key: c.categoryId, label: c.name, value: c.monthly, color: CATEGORY_COLORS[i] });
+    } else overflow += c.monthly;
+  }
+  if (overflow > 0) slices.push({ key: -1, label: "หมวดอื่น", value: overflow, color: OVERFLOW_COLOR });
+  return slices;
 }
 
 /** ยังไม่มีรายการ: บล็อก slip กลายเป็นคำเชิญ + ทางลัดบริการยอดนิยม (docs/03 ข้อ 6) */

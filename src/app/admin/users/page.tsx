@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { UserDeleteButton, UserRoleButton } from "@/components/admin/user-actions";
 import { UserStatusButton } from "@/components/admin/user-status-button";
 import { formatThaiDateTime } from "@/lib/dates";
 import { getCurrentUser } from "@/server/auth";
@@ -7,13 +8,14 @@ import { listUsers } from "@/server/services/admin-users";
 
 export const metadata: Metadata = { title: "ผู้ใช้ · หลังบ้าน" };
 
-/** รายชื่อผู้ใช้ + ค้นหา + ระงับ/เปิดใช้งาน (US-H4) — แสดงเฉพาะข้อมูลบัญชี ไม่มีรายการ subscription ส่วนตัว */
+/** รายชื่อผู้ใช้ + ค้นหา + ระงับ/เปิดใช้งาน + เปลี่ยนสิทธิ์ + ลบ (US-H4) — แสดงเฉพาะข้อมูลบัญชี ไม่มีรายการ subscription ส่วนตัว */
 export default async function AdminUsersPage({ searchParams }: PageProps<"/admin/users">) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const page = Math.max(1, Number(sp.page) || 1);
   const [me, { data, meta }] = await Promise.all([getCurrentUser(), listUsers({ q, page })]);
   const pages = Math.max(1, Math.ceil(meta.total / meta.pageSize));
+  /** ลิงก์หน้าถัดไป/ก่อนหน้าที่คงคำค้นเดิมไว้ */
   const pageHref = (p: number) => `/admin/users?${new URLSearchParams({ ...(q && { q }), page: String(p) })}`;
 
   return (
@@ -39,7 +41,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       </form>
 
       <div className="glass relative mt-6 overflow-x-auto rounded-card">
-        <table className="w-full min-w-[640px] text-left">
+        <table className="stack-table w-full min-w-[760px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">
               <th scope="col" className="px-5 py-3 font-medium">
@@ -65,10 +67,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 <td className="px-5 py-3 font-medium">
                   {u.name}
                   {u.role === "admin" && (
-                    <span className="ml-2 text-caption text-text-muted">ผู้ดูแลระบบ</span>
+                    <span className="ml-2 text-caption whitespace-nowrap text-text-muted">ผู้ดูแลระบบ</span>
                   )}
                 </td>
-                <td className="px-5 py-3 text-text-muted">
+                <td data-label="อีเมล" className="px-5 py-3 text-text-muted">
                   {u.email}
                   <span className="block text-caption text-text-faint">
                     {u.loginMethods.length === 0
@@ -78,9 +80,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                           .join(" · ")}
                   </span>
                 </td>
-                <td className="px-5 py-3 text-caption text-text-muted">{formatThaiDateTime(u.createdAt)}</td>
-                <td className="px-5 py-3">
-                  <span className="inline-flex items-center gap-2 text-caption">
+                <td data-label="สมัครเมื่อ" className="px-5 py-3 text-caption text-text-muted">
+                  {formatThaiDateTime(u.createdAt)}
+                </td>
+                <td data-label="สถานะ" className="px-5 py-3">
+                  <span className="inline-flex items-center gap-2 text-caption whitespace-nowrap">
                     <span
                       aria-hidden
                       className={`size-2 rounded-full ${u.status === "active" ? "bg-paid" : "bg-danger"}`}
@@ -88,9 +92,16 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                     {u.status === "active" ? "ใช้งานได้" : "ถูกระงับ"}
                   </span>
                 </td>
-                <td className="px-5 py-2 text-right">
-                  {u.role !== "admin" && u.id !== me?.id && (
-                    <UserStatusButton id={u.id} name={u.name} status={u.status} />
+                <td className="px-5 py-2 text-right whitespace-nowrap">
+                  {u.id === me?.id ? (
+                    <span className="text-caption text-text-faint">บัญชีของคุณ</span>
+                  ) : (
+                    <>
+                      {/* ผู้ดูแลระบบ: เปลี่ยนสิทธิ์ได้อย่างเดียว ต้องถอดสิทธิ์ก่อนจึงระงับ/ลบได้ */}
+                      {u.role !== "admin" && <UserStatusButton id={u.id} name={u.name} status={u.status} />}
+                      <UserRoleButton id={u.id} name={u.name} role={u.role} />
+                      {u.role !== "admin" && <UserDeleteButton id={u.id} name={u.name} email={u.email} />}
+                    </>
                   )}
                 </td>
               </tr>

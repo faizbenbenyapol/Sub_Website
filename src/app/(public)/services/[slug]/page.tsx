@@ -33,9 +33,9 @@ export default async function ServiceDetailPage({ params }: PageProps<"/services
   return (
     <>
       <PublicHeader />
-      <main className="mx-auto max-w-[1120px] px-4 pt-6 pb-16 md:px-8 md:pt-10">
+      <main className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 md:px-8 md:pt-10 lg:pb-16">
         <Link href="/services" className="text-caption text-text-muted hover:text-text">
-          ← คลังบริการ
+          ← รวมบริการ
         </Link>
 
         <div className="mt-4 flex items-center gap-4">

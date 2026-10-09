@@ -39,6 +39,7 @@ export type SubscriptionDto = {
 
 const serviceCategory = alias(categories, "service_category");
 const customCategory = alias(categories, "custom_category");
+/** error เมื่อไม่พบรายการ หรือเป็นรายการของคนอื่น */
 const notFound = () => new ApiError(404, "NOT_FOUND", "ไม่พบรายการนี้");
 
 /** query พื้นฐาน: รายการ + แพ็กเกจ + บริการ + หมวด (ของบริการหรือของ custom) + กลุ่มหาร */
@@ -139,6 +140,7 @@ async function selectablePlan(planId: number) {
   return row.plan;
 }
 
+/** error เมื่อเลือกหมวดที่ไม่มีอยู่แล้ว */
 const missingCategory = () =>
   new ApiError(400, "VALIDATION_ERROR", "ไม่พบหมวดที่เลือก", { customCategoryId: "ไม่พบหมวดที่เลือก" });
 
@@ -196,11 +198,11 @@ export async function updateSubscription(
     throw new ApiError(
       400,
       "VALIDATION_ERROR",
-      "รายการที่เพิ่มเองเปลี่ยนเป็นแพ็กเกจในคลังไม่ได้ ลบแล้วเพิ่มใหม่แทน",
+      "รายการที่เพิ่มเองเปลี่ยนเป็นแพ็กเกจในรวมบริการไม่ได้ ลบแล้วเพิ่มใหม่แทน",
     );
   }
   if (!isCustom && (input.customName !== undefined || input.customCategoryId !== undefined)) {
-    throw new ApiError(400, "VALIDATION_ERROR", "รายการจากคลังแก้ชื่อหรือหมวดไม่ได้");
+    throw new ApiError(400, "VALIDATION_ERROR", "รายการจากรวมบริการแก้ชื่อหรือหมวดไม่ได้");
   }
   if (input.planId !== undefined && input.planId !== current.planId) {
     const [currentPlan] = await db.select().from(plans).where(eq(plans.id, current.planId!)).limit(1);

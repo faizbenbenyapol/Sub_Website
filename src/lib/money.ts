@@ -30,3 +30,11 @@ export function formatBaht(baht: number, opts: { short?: boolean } = {}): string
   const s = bahtFormat.format(baht);
   return `฿${opts.short && Number.isInteger(baht) ? s.slice(0, -3) : s}`;
 }
+
+/** ยอดแบบย่อสำหรับที่แคบมาก (ช่องวันในปฏิทินบนมือถือ): 419 → "419", 1,200 → "1.2k", 12,990 → "13k" */
+export function formatCompactBaht(baht: number): string {
+  const whole = Math.round(baht); // ปัดก่อนเทียบ ไม่งั้น 999.5 ได้ "1000" แทน "1k"
+  if (whole < 1000) return String(whole);
+  if (baht < 10_000) return `${(Math.round(baht / 100) / 10).toString()}k`;
+  return `${Math.round(baht / 1000)}k`;
+}

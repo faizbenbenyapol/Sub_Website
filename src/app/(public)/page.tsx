@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <PublicHeader />
-      <main className="mx-auto flex max-w-[1120px] flex-col gap-12 px-4 py-12 md:px-8 md:py-16">
+      <main className="mx-auto flex max-w-[1120px] flex-col gap-12 px-4 pt-12 pb-28 md:px-8 md:pt-16 lg:pb-16">
         <header className="max-w-[40rem]">
           <h1 className="text-h2 font-bold md:text-h1">เดือนนี้โดนตัดเงินอะไรบ้าง?</h1>
           <p className="mt-3 text-text-muted">
@@ -38,7 +38,7 @@ export default function Home() {
             href="/services"
             className="glass inline-flex h-12 items-center rounded-control border-line-strong px-6 font-display font-semibold"
           >
-            ดูคลังบริการ
+            ดูรวมบริการ
           </Link>
         </div>
       </main>

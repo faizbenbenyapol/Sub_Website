@@ -13,6 +13,7 @@ export class GoogleSignInError extends Error {
   }
 }
 
+/** โหลดผู้ใช้จาก id */
 const byId = async (id: number) => (await db.select().from(users).where(eq(users.id, id)).limit(1))[0];
 
 /**

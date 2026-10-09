@@ -19,6 +19,7 @@ export function BarList({
   label: string;
 }) {
   const max = Math.max(...data.map((d) => d.value), 0);
+  /** ข้อความตัวเลขท้ายแท่ง: เงินบาท หรือจำนวน */
   const show = (v: number) =>
     format === "baht" ? formatBaht(v, { short: true }) : v.toLocaleString("th-TH");
 
@@ -32,7 +33,9 @@ export function BarList({
             title={`${d.label}: ${show(d.value)}${unit ? ` ${unit}` : ""}`}
             className="grid grid-cols-[minmax(5.5rem,30%)_minmax(0,1fr)] items-center gap-3"
           >
-            <span className="truncate text-caption text-text-muted">{d.label}</span>
+            <span className="line-clamp-2 text-caption leading-snug break-words text-text-muted">
+              {d.label}
+            </span>
             <span className="flex items-center gap-2">
               <span
                 aria-hidden

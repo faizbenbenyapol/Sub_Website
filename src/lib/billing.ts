@@ -22,6 +22,16 @@ export function nextCycleDate(iso: string, cycle: Cycle, anchorDay: number): str
   return toIsoDate(ny, nm, Math.min(anchorDay, daysInMonth(ny, nm)));
 }
 
+/** ถอยวันตัดเงินกลับหนึ่งรอบ ยึด anchor day แบบเดียวกับ nextCycleDate (ใช้หารอบที่ตัดไปแล้วในเดือนนี้) */
+export function prevCycleDate(iso: string, cycle: Cycle, anchorDay: number): string {
+  const { y, m } = parseIsoDate(iso);
+  const months = cycle === "monthly" ? 1 : 12;
+  const total = y * 12 + (m - 1) - months;
+  const py = Math.floor(total / 12);
+  const pm = (total % 12) + 1;
+  return toIsoDate(py, pm, Math.min(anchorDay, daysInMonth(py, pm)));
+}
+
 /** เลื่อนวันตัดเงินที่เลยมาแล้วไปจนถึงรอบแรกที่ >= วันนี้ (วันตัดเงิน = วันนี้ ไม่เลื่อน) */
 export function rollForward(iso: string, cycle: Cycle, anchorDay: number, today: string): string {
   let date = iso;

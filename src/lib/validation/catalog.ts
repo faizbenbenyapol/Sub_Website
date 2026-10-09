@@ -22,6 +22,28 @@ const optionalUrl = z
   .nullable()
   .optional();
 
+/** โลโก้: ลิงก์ http(s) หรือไฟล์ในเว็บเราเอง เช่น /logos/netflix.png (โลโก้ที่ seed ใส่ไว้) */
+const optionalLogoUrl = z
+  .string()
+  .trim()
+  .max(500, "ลิงก์ยาวเกินไป")
+  .transform((v) => (v === "" ? null : v))
+  .pipe(
+    z
+      .union(
+        [
+          z.url({ protocol: /^https?$/ }),
+          z.string().regex(/^\/(?!\/)[\w\-./]+$/), // path ในเว็บ ห้าม // (จะกลายเป็นโดเมนอื่น)
+        ],
+        {
+          error: "ต้องเป็นลิงก์ http:// หรือ https:// หรือไฟล์ในเว็บที่ขึ้นต้นด้วย / เช่น /logos/netflix.png",
+        },
+      )
+      .nullable(),
+  )
+  .nullable()
+  .optional();
+
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อหมวด").max(50, "ชื่อหมวดยาวได้ไม่เกิน 50 ตัวอักษร"),
   slug,
@@ -34,7 +56,7 @@ export const serviceCreateSchema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อบริการ").max(100, "ชื่อบริการยาวได้ไม่เกิน 100 ตัวอักษร"),
   slug: slug.max(100),
   categoryId: z.coerce.number({ error: "กรุณาเลือกหมวด" }).int().positive("กรุณาเลือกหมวด"),
-  logoUrl: optionalUrl,
+  logoUrl: optionalLogoUrl,
   websiteUrl: optionalUrl,
   cancelSteps: z
     .string()

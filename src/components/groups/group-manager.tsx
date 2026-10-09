@@ -43,6 +43,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
     return true;
   }
 
+  /** สลับจ่ายแล้ว/ยังไม่จ่ายของสมาชิกในเดือนที่ดูอยู่ */
   const togglePaid = (m: GroupMemberDto) =>
     send(
       `/api/groups/${group.id}/payments`,
@@ -51,6 +52,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
       m.status === "paid" ? `${m.name} กลับเป็นยังไม่จ่าย` : `${m.name} จ่ายแล้ว`,
     );
 
+  /** คัดลอกลิงก์หน้าจ่ายเงินของสมาชิกไปคลิปบอร์ด */
   async function copyLink(m: GroupMemberDto) {
     try {
       await navigator.clipboard.writeText(m.payUrl);
@@ -60,6 +62,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
     }
   }
 
+  /** เพิ่มหรือแก้สมาชิก (member ไม่มี = เพิ่มใหม่) */
   async function saveMember(e: FormEvent<HTMLFormElement>, member?: GroupMemberDto) {
     e.preventDefault();
     const raw = Object.fromEntries(new FormData(e.currentTarget));
@@ -79,6 +82,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
     if (ok) setDialog(null);
   }
 
+  /** บันทึกชื่อกลุ่ม พร้อมเพย์ และวิธีหาร */
   async function saveSettings(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const raw = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
@@ -92,6 +96,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
       setDialog(null);
   }
 
+  /** ลบกลุ่ม (ลิงก์จ่ายเงินของทุกคนใช้ไม่ได้ทันที รายการ subscription ยังอยู่) */
   async function removeGroup() {
     setPending(true);
     const res = await apiFetch(`/api/groups/${group.id}`, { method: "DELETE" });
@@ -102,6 +107,7 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
     router.refresh();
   }
 
+  /** เปิด dialog (เพิ่ม/แก้สมาชิก ตั้งค่ากลุ่ม ลบ) พร้อมล้าง error เดิม */
   const open = (d: typeof dialog) => {
     setErrors({});
     setDialog(d);
@@ -161,7 +167,9 @@ export function GroupManager({ group, prevPeriod, nextPeriod, isCurrent }: Props
           >
             <div className="min-w-0 flex-1">
               <p className="font-display text-lead font-semibold">{m.name}</p>
-              <p className="truncate text-caption text-text-muted">{m.email ?? "ไม่มีอีเมล"}</p>
+              <p className="text-caption [overflow-wrap:anywhere] text-text-muted">
+                {m.email ?? "ไม่มีอีเมล"}
+              </p>
             </div>
             <p className="figure text-lead md:w-28 md:text-right">{formatBaht(m.amount)}</p>
             <button

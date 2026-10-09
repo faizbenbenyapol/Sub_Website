@@ -22,7 +22,7 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-h2 font-bold">บริการและแพ็กเกจ</h1>
-          <p className="mt-1 text-text-muted">คลังข้อมูลที่ผู้ใช้เห็นในหน้าคลังบริการ</p>
+          <p className="mt-1 text-text-muted">บริการและราคาที่ผู้ใช้เห็นในหน้ารวมบริการ</p>
         </div>
         <Link
           href="/admin/services/new"
@@ -54,7 +54,7 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
             id="category"
             name="category"
             defaultValue={category}
-            className="h-12 rounded-control border border-line-strong bg-glass-strong px-4 focus:border-paid focus:outline-none"
+            className="h-12 rounded-control border border-line-strong bg-glass-strong focus:border-paid focus:outline-none"
           >
             <option value="">ทุกหมวด</option>
             {categories.map((c) => (
@@ -70,7 +70,7 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
       </form>
 
       <div className="glass relative mt-6 overflow-x-auto rounded-card">
-        <table className="w-full min-w-[640px] text-left">
+        <table className="stack-table w-full min-w-[640px] text-left">
           <thead className="text-caption text-text-muted">
             <tr className="border-b border-line">
               <th scope="col" className="px-5 py-3 font-medium">
@@ -105,8 +105,10 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
                     {s.name}
                   </Link>
                 </td>
-                <td className="px-5 py-3 text-text-muted">{s.category.name}</td>
-                <td className="figure px-5 py-3 text-right">
+                <td data-label="หมวด" className="px-5 py-3 text-text-muted">
+                  {s.category.name}
+                </td>
+                <td data-label="เริ่มต้น" className="figure px-5 py-3 text-right">
                   {s.startingPrice === null ? (
                     <span className="font-sans text-text-faint">ยังไม่มีแพ็กเกจ</span>
                   ) : (
@@ -118,9 +120,13 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
                     </>
                   )}
                 </td>
-                <td className="figure px-5 py-3 text-right">{s.planCount}</td>
-                <td className="figure px-5 py-3 text-right">{s.subscriberCount}</td>
-                <td className="px-5 py-3">
+                <td data-label="แพ็กเกจ" className="figure px-5 py-3 text-right">
+                  {s.planCount}
+                </td>
+                <td data-label="ผู้ใช้ที่ผูก" className="figure px-5 py-3 text-right">
+                  {s.subscriberCount}
+                </td>
+                <td data-label="สถานะ" className="px-5 py-3">
                   <span className="inline-flex items-center gap-2 text-caption">
                     <span
                       aria-hidden
@@ -135,7 +141,7 @@ export default async function AdminServicesPage({ searchParams }: PageProps<"/ad
         </table>
         {services.length === 0 && (
           <p className="px-5 py-8 text-text-muted">
-            {filtered ? "ไม่พบบริการที่ตรงกับคำค้น ลองคำอื่นหรือเลือกทุกหมวด" : "ยังไม่มีบริการในคลัง"}
+            {filtered ? "ไม่พบบริการที่ตรงกับคำค้น ลองคำอื่นหรือเลือกทุกหมวด" : "ยังไม่มีบริการในรวมบริการ"}
           </p>
         )}
       </div>

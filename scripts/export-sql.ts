@@ -1,4 +1,4 @@
-// สร้างไฟล์ SQL สำหรับส่งงาน: โครงสร้างทุกตาราง + ข้อมูลตัวอย่าง (หมวด, 18 บริการ, บัญชี admin/demo)
+// สร้างไฟล์ SQL สำหรับส่งงาน: โครงสร้างทุกตาราง + ข้อมูลตัวอย่าง (หมวด, 37 บริการ, บัญชี admin/demo)
 // ใช้: npm run db:export → submission/tadyang.sql
 // ทำงานบน DB ชั่วคราว `tadyang_export` (สร้าง → migrate → seed → dump → ลบทิ้ง) จึงไม่แตะข้อมูลใน DB `tadyang` ที่ใช้พัฒนา
 import { execFileSync } from "node:child_process";
@@ -10,13 +10,24 @@ const ROOT_URL = "mysql://root:root@localhost:3307";
 const EXPORT_DB = "tadyang_export";
 const OUT = join("submission", "tadyang.sql");
 
-// บัญชีตัวอย่างในไฟล์ส่งงาน — รหัสผ่านนี้ตั้งใจเปิดเผยให้ผู้ตรวจล็อกอินได้ (ไม่ใช่ค่าใน .env ของเครื่องพัฒนา)
-export const SAMPLE_ACCOUNTS = {
-  ADMIN_EMAIL: "admin@tadyang.local",
-  ADMIN_PASSWORD: "Admin@1234",
-  DEMO_EMAIL: "demo@tadyang.local",
-  DEMO_PASSWORD: "Demo@1234",
-};
+/**
+ * บัญชีตัวอย่างในไฟล์ส่งงาน — อ่านจาก .env (SUBMISSION_*) ไม่เขียนรหัสไว้ในโค้ด เพราะ repo ขึ้น GitHub
+ * รหัสไปปรากฏแค่ในหัวไฟล์ submission/tadyang.sql ที่ส่งผู้ตรวจทาง Google Drive (โฟลเดอร์นี้ไม่อยู่ใน git)
+ */
+function sampleAccounts() {
+  const read = (key: string) => {
+    const value = process.env[key]?.trim();
+    if (!value) throw new Error(`ตั้ง ${key} ใน .env ก่อน (บัญชีตัวอย่างสำหรับไฟล์ส่งงาน — ดู .env.example)`);
+    return value;
+  };
+  return {
+    ADMIN_EMAIL: read("SUBMISSION_ADMIN_EMAIL"),
+    ADMIN_PASSWORD: read("SUBMISSION_ADMIN_PASSWORD"),
+    DEMO_EMAIL: read("SUBMISSION_DEMO_EMAIL"),
+    DEMO_PASSWORD: read("SUBMISSION_DEMO_PASSWORD"),
+  };
+}
+const SAMPLE_ACCOUNTS = sampleAccounts();
 
 /** รันสคริปต์ tsx อีกตัวกับ DB export */
 function runScript(file: string) {
@@ -42,6 +53,7 @@ function makePortable(sql: string): string {
   );
 }
 
+/** สร้าง DB ชั่วคราว → migrate → seed ด้วยบัญชีตัวอย่าง → dump เป็นไฟล์ SQL → ลบ DB ชั่วคราว */
 async function main() {
   const root = await mysql.createConnection({ uri: ROOT_URL });
   try {
@@ -78,7 +90,7 @@ async function main() {
 -- บัญชีตัวอย่าง:
 --   Admin : ${SAMPLE_ACCOUNTS.ADMIN_EMAIL} / ${SAMPLE_ACCOUNTS.ADMIN_PASSWORD}
 --   ผู้ใช้ : ${SAMPLE_ACCOUNTS.DEMO_EMAIL} / ${SAMPLE_ACCOUNTS.DEMO_PASSWORD}  (มี 7 รายการ — วันตัดเงินที่ผ่านไปแล้วระบบเลื่อนให้เองตอนเปิดดู)
--- รหัสผ่านเก็บเป็น bcrypt hash · ราคาในคลังเก็บเมื่อ 6 ต.ค. 2569 (แหล่งอ้างอิงใน scripts/seed-data.ts)
+-- รหัสผ่านเก็บเป็น bcrypt hash · ราคาเก็บเมื่อ 6 ต.ค. 2569 ตรวจซ้ำ 9 ต.ค. 2569 (แหล่งอ้างอิงใน scripts/seed-data.ts)
 
 SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS \`tadyang\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

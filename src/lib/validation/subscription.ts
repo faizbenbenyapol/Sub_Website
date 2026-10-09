@@ -28,6 +28,7 @@ const optionalDate = z
   .transform((v) => (v === "" ? null : v))
   .optional();
 
+/** รหัส (id) ที่ส่งมาเป็นข้อความหรือตัวเลขก็ได้ ต้องเป็นจำนวนเต็มบวก */
 const id = (message: string) => z.coerce.number({ error: message }).int().positive(message);
 
 const common = {

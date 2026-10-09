@@ -20,6 +20,7 @@ import {
 // CRUD คลังข้อมูลสำหรับหลังบ้าน (US-H1–H3) — เรียกจาก route ที่ผ่าน requireAdmin() แล้วเท่านั้น
 
 const notFound = (what: string) => new ApiError(404, "NOT_FOUND", `ไม่พบ${what}`);
+/** error เมื่อ slug ซ้ำกับของที่มีอยู่ (ตอบที่ช่อง slug ในฟอร์ม) */
 const slugTaken = () =>
   new ApiError(400, "VALIDATION_ERROR", "slug นี้ถูกใช้แล้ว", { slug: "slug นี้ถูกใช้แล้ว เลือกชื่ออื่น" });
 

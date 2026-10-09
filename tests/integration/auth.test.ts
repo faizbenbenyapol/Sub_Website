@@ -171,6 +171,7 @@ const PUBLIC_ROUTES = new Set([
   "auth/register",
   "auth/login",
   "auth/logout",
+  "auth/demo", // ปุ่มบัญชีตัวอย่าง — ทดสอบแยกด้านล่าง
   "auth/google",
   "auth/google/callback",
   "categories",
@@ -297,5 +298,14 @@ describe("logout ยกเลิก token เดิม", () => {
       .setExpirationTime("1h")
       .sign(new TextEncoder().encode(process.env.SESSION_SECRET!));
     expect((await call(me, "/api/auth/me", { token: legacy })).status).toBe(200);
+  });
+});
+
+describe("ปุ่มบัญชีตัวอย่าง (/api/auth/demo)", () => {
+  it("ปิดอยู่ (DEMO_LOGIN ไม่ใช่ true) หรือยังไม่มีบัญชี DEMO_EMAIL ใน DB → 404 และไม่ออก cookie", async () => {
+    const { POST: demo } = await import("@/app/api/auth/demo/route");
+    const r = await call(demo, "/api/auth/demo", { method: "POST" });
+    expect(r.status).toBe(404);
+    expect(r.res.headers.get("set-cookie")).toBeNull();
   });
 });
