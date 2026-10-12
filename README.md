@@ -25,4 +25,26 @@
 | ทดสอบ              | Vitest (unit + integration) · Playwright (E2E)                |                                         |
 | ติดตั้งจริง        | Docker + Caddy (HTTPS อัตโนมัติ)                              |                                         |
 
-วิธีติดตั้ง รัน และไฟล์สำหรับผู้ตรวจ (import SQL + บัญชีตัวอย่าง) อยู่ที่ [docs/06-setup.md](docs/06-setup.md)
+## รันบนเครื่อง (local)
+
+ต้องมี Node.js 24 ขึ้นไป และ MySQL/MariaDB (เช่น XAMPP)
+
+1. clone โปรเจกต์
+
+   ```bash
+   git clone https://github.com/faizbenbenyapol/Sub_Website.git
+   cd Sub_Website
+   ```
+
+2. เปิด XAMPP → Start **MySQL** แล้ว import ไฟล์ `tadyang.sql` ผ่าน phpMyAdmin (สร้าง database `tadyang` ให้เอง)
+3. รันเว็บ แล้วเปิด http://localhost:3000
+
+   ```bash
+   npm run dev
+   ```
+
+ครั้งแรกจะ `npm install` และสร้าง `.env` ให้เอง (ต่อ XAMPP แบบ `root` ไม่มีรหัส) · ถ้า MySQL มีรหัสหรือใช้พอร์ตอื่น แก้ `DATABASE_URL` ใน `.env`
+
+ไม่มีไฟล์ `tadyang.sql`: สร้าง database `tadyang` ใน phpMyAdmin → ใส่ `ADMIN_PASSWORD` และ `DEMO_PASSWORD` ใน `.env` → `npm run db:migrate` แล้ว `npm run db:seed`
+
+รายละเอียดเพิ่มเติม (Docker, ทดสอบ, อีเมล) อยู่ที่ [docs/06-setup.md](docs/06-setup.md)
