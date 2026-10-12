@@ -47,4 +47,20 @@
 
 ไม่มีไฟล์ `tadyang.sql`: สร้าง database `tadyang` ใน phpMyAdmin → ใส่ `ADMIN_PASSWORD` และ `DEMO_PASSWORD` ใน `.env` → `npm run db:migrate` แล้ว `npm run db:seed`
 
+### บัญชีสำหรับทดสอบบน localhost
+
+| บัญชี | Email                | รหัสผ่าน                                                        |
+| ----- | -------------------- | --------------------------------------------------------------- |
+| Admin | `admin@admin.com`    | `admin1234`                                                     |
+| Demo  | `demo@tadyang.local` | กดปุ่ม "ลองใช้ด้วยบัญชีตัวอย่าง" หน้า login (`DEMO_LOGIN=true`) |
+
+ถ้า database ยังไม่มีบัญชี admin นี้ ให้ตั้งใน `.env` แล้วรัน `npm run db:seed`
+
+```env
+ADMIN_EMAIL=admin@admin.com
+ADMIN_PASSWORD=admin1234
+```
+
+> ใช้สำหรับทดสอบบนเครื่องตัวเองเท่านั้น — production ต้องตั้งรหัสใหม่ที่เดายาก
+
 รายละเอียดเพิ่มเติม (Docker, ทดสอบ, อีเมล) อยู่ที่ [docs/06-setup.md](docs/06-setup.md)
