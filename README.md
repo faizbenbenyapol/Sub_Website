@@ -49,16 +49,20 @@
 
 ### บัญชีสำหรับทดสอบบน localhost
 
-| บัญชี | Email                | รหัสผ่าน                                                        |
-| ----- | -------------------- | --------------------------------------------------------------- |
-| Admin | `admin@admin.com`    | `admin1234`                                                     |
-| Demo  | `demo@tadyang.local` | กดปุ่ม "ลองใช้ด้วยบัญชีตัวอย่าง" หน้า login (`DEMO_LOGIN=true`) |
+บัญชีที่มากับไฟล์ `tadyang.sql`
 
-ถ้า database ยังไม่มีบัญชี admin นี้ ให้ตั้งใน `.env` แล้วรัน `npm run db:seed`
+| บัญชี | Email                | รหัสผ่าน                                                                        |
+| ----- | -------------------- | ------------------------------------------------------------------------------- |
+| Admin | `admin@admin.com`    | `12345678`                                                                      |
+| Demo  | `demo@tadyang.local` | `Demo@1234` หรือกดปุ่ม "ลองใช้ด้วยบัญชีตัวอย่าง" หน้า login (`DEMO_LOGIN=true`) |
+
+ถ้าไม่ได้ import `tadyang.sql` ให้ตั้งใน `.env` แล้วรัน `npm run db:seed`
 
 ```env
 ADMIN_EMAIL=admin@admin.com
-ADMIN_PASSWORD=admin1234
+ADMIN_PASSWORD=12345678
+DEMO_EMAIL=demo@tadyang.local
+DEMO_PASSWORD=Demo@1234
 ```
 
 > ใช้สำหรับทดสอบบนเครื่องตัวเองเท่านั้น — production ต้องตั้งรหัสใหม่ที่เดายาก
