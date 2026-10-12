@@ -2,20 +2,25 @@
 
 คู่มือติดตั้ง รัน และส่งงาน (README หลักอธิบายแค่ภาพรวมและ Stack)
 
-## ทางลัดสำหรับผู้ตรวจ: import ไฟล์ SQL
+## ทางลัดสำหรับผู้ตรวจ: แตกไฟล์ → import SQL → npm run dev
 
-ไฟล์ `tadyang.sql` (โฟลเดอร์ `submission/` หรือในลิงก์ส่งงาน) มีโครงสร้างทุกตาราง + ข้อมูลตัวอย่าง และสร้าง database `tadyang` ให้เอง
+ต้องมี Node.js 24 ขึ้นไป และ MySQL/MariaDB สักตัว (เช่น XAMPP)
+
+1. แตกไฟล์ zip แล้วเปิด XAMPP → Start **MySQL**
+2. import `tadyang.sql` (อยู่ในโฟลเดอร์โปรเจกต์) — phpMyAdmin → Import → เลือกไฟล์ → Go (สร้าง database `tadyang` ให้เอง)
+3. เปิด terminal ในโฟลเดอร์โปรเจกต์ แล้ว
 
 ```bash
-docker compose up -d                                         # หรือใช้ MySQL 8 / MariaDB ของ XAMPP ที่มีอยู่
-docker exec -i tadyang-db mysql -uroot -proot < tadyang.sql  # XAMPP: phpMyAdmin → Import → เลือกไฟล์
+npm run dev
 ```
 
-> ⚠️ import ทับตารางใน database `tadyang` ที่มีอยู่เดิม
+ครั้งแรกจะ `npm install` และสร้าง `.env` ให้เอง (`scripts/dev-setup.mjs`) — เลือก XAMPP (`root` ไม่มีรหัส พอร์ต 3306) หรือ Docker (พอร์ต 3307) ตามที่เปิดอยู่ แล้วเปิด http://localhost:3000
 
-บัญชีตัวอย่าง (Admin และผู้ใช้ที่มี 7 รายการ) พร้อมรหัสผ่าน **อยู่ที่หัวไฟล์ `tadyang.sql`** ในลิงก์ส่งงาน — ไม่เขียนไว้ใน repo เพราะ repo เปิดบน GitHub
+> ⚠️ import ทับตารางใน database `tadyang` ที่มีอยู่เดิม · ถ้า MySQL มีรหัส root หรือใช้พอร์ตอื่น แก้ `DATABASE_URL` ใน `.env` แล้วรันใหม่
 
-จากนั้นตั้ง `.env` ตามหัวข้อ "ตั้งเครื่องครั้งแรก" (ข้ามขั้น `db:migrate` / `db:seed`) แล้ว `npm run dev` · ไฟล์ทดสอบ import แล้วทั้ง MySQL 8.4 และ MariaDB 10.4 (XAMPP) แต่ตัวเว็บพัฒนาและทดสอบบน MySQL 8.4 — ถ้ารันกับ XAMPP ให้แก้ `DATABASE_URL` เป็นพอร์ตและรหัสของ XAMPP เช่น `mysql://root:@localhost:3306/tadyang`
+บัญชีตัวอย่าง (Admin และผู้ใช้ที่มี 7 รายการ) พร้อมรหัสผ่าน **อยู่ที่หัวไฟล์ `tadyang.sql`** — หรือกดปุ่ม "ลองใช้ด้วยบัญชีตัวอย่าง" หน้า login · ไม่เขียนรหัสไว้ใน repo เพราะ repo เปิดบน GitHub
+
+ทดสอบขั้นตอนนี้แล้วทั้ง MySQL 8.4 (Docker) และ MariaDB 10.4 (XAMPP) · ใช้ Docker แทน XAMPP: `docker compose up -d` แล้ว `docker exec -i tadyang-db mysql -uroot -proot < tadyang.sql`
 
 ## ตั้งเครื่องครั้งแรก
 
@@ -55,7 +60,7 @@ npm run dev                   # http://localhost:3000
 | `npm run db:reset`    | ล้างทุกตาราง → migrate → seed ใหม่ (ห้ามใช้บน production)                                                                                                                   |
 | `npm run db:studio`   | ดูข้อมูลผ่าน Drizzle Studio                                                                                                                                                 |
 | `npm run db:export`   | สร้าง `submission/tadyang.sql` (โครงสร้าง + ข้อมูลตัวอย่าง จาก DB ชั่วคราว ไม่แตะข้อมูลที่ใช้พัฒนา)                                                                         |
-| `npm run pack:source` | zip source code จาก commit ล่าสุดเป็น `submission/tadyang-source.zip` (ไม่มี `.env` และ `node_modules`)                                                                     |
+| `npm run pack:source` | zip source code จาก commit ล่าสุด + `tadyang.sql` เป็น `submission/tadyang-source.zip` (ไม่มี `.env` และ `node_modules` — `npm run dev` สร้างให้เอง)                          |
 | `node scripts/audit-responsive.mjs` | ตรวจทุกหน้าที่ความกว้าง 360–1440px กับ dev server ที่รันอยู่: หาเลื่อนแนวนอน ล้นขอบจอ ข้อความถูกตัด และเก็บภาพหน้าจอ (ต้อง `DEMO_LOGIN=true` และตั้ง `AUDIT_ADMIN_EMAIL` / `AUDIT_ADMIN_PASSWORD`) |
 
 ## อีเมลแจ้งเตือน

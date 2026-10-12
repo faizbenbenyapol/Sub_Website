@@ -3,6 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/dev-setup.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -23,7 +24,7 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "db:reset": "tsx --env-file=.env scripts/reset.ts && npm run db:seed",
     "db:export": "tsx --env-file=.env scripts/export-sql.ts",
-    "pack:source": "git archive --format=zip --prefix=tadyang/ -o submission/tadyang-source.zip HEAD"
+    "pack:source": "git archive --format=zip --prefix=tadyang/ --add-file=submission/tadyang.sql -o submission/tadyang-source.zip HEAD"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
